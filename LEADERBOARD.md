@@ -3,7 +3,7 @@
 **Dataset:** 16 real merged PRs (7 C / 9 C++), 20 human-verified golden findings
 **Judge (default):** `anthropic_claude-sonnet-4-5-20250929` — also scored by
 `anthropic_claude-opus-4-5-20251101` and `openai_gpt-5.2`
-**Last updated:** 2026-06-24
+**Last updated:** 2026-06-25
 
 Every reviewer is scored by the same scrape-and-judge pipeline on the same forks.
 Reproduce the scores from `results/` with `python pipeline/compute_metrics.py`
@@ -21,8 +21,9 @@ between judges; CloudAEye's lead does not).
 | 4 | Greptile | 11 | 30 | 9 | 26.8% | 55.0% | 36.1 |
 | 5 | Gemini Code Assist | 10 | 32 | 10 | 23.8% | 50.0% | 32.3 |
 | 6 | GitHub Copilot | 10 | 40 | 10 | 20.0% | 50.0% | 28.6 |
-| 7 | Claude (GitHub App) | 12 | 70 | 8 | 14.6% | 60.0% | 23.5 |
-| 8 | CodeRabbit | 5 | 19 | 15 | 20.8% | 25.0% | 22.7 |
+| 7 | OpenAI Codex | 5 | 13 | 15 | 27.8% | 25.0% | 26.3 |
+| 8 | Claude (GitHub App) | 12 | 70 | 8 | 14.6% | 60.0% | 23.5 |
+| 9 | CodeRabbit | 5 | 19 | 15 | 20.8% | 25.0% | 22.7 |
 
 - **TP** — golden findings the reviewer correctly raised
 - **FP** — issues the reviewer raised that don't correspond to a golden

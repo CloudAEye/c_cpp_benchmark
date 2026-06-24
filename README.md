@@ -11,6 +11,11 @@ Everything needed to reproduce the leaderboard and to score a new reviewer is in
 this folder. The raw reviews each bot posted can be read on the live forks — see
 [Browse the bot reviews](#browse-the-bot-reviews).
 
+> **Inspired by [withmartian/code-review-benchmark](https://github.com/withmartian/code-review-benchmark)** —
+> we adopted its scrape → atomic-candidate → LLM-as-judge methodology and per-judge
+> results layout, then built a benchmark dedicated to **C and C++** with
+> human-verified goldens, commit-pinned forks, and a multi-judge leaderboard.
+
 ---
 
 ## The dataset
@@ -28,6 +33,42 @@ this folder. The raw reviews each bot posted can be read on the live forks — s
 
 `benchmark_final16.json` is the source of truth: the 16 PRs, their pinned SHAs, and
 the full golden set with categories, severities, paths, and evidence.
+
+## Why C/C++ — and how these repos were chosen
+
+Most public code-review benchmarks are dominated by web and application languages
+(JavaScript/TypeScript, Python), where the common defects are logic, API-misuse, and
+framework issues. **C and C++ have a different, higher-stakes bug surface** that those
+suites barely exercise: manual memory management (use-after-free, leaks, double-free),
+undefined behavior, pointer/lifetime/aliasing mistakes, integer overflow and signedness,
+buffer and bounds errors, data races and lock discipline, and RAII/ownership violations.
+A reviewer that looks strong on web code can miss exactly these — so measuring C/C++
+review quality needs its own benchmark.
+
+**Repo selection.** We picked from widely-used, actively-maintained open-source C and
+C++ projects with a **strong human code-review culture**, because that culture is what
+makes a golden trustworthy: the bug was caught and fixed by a human reviewer on the
+original PR, not asserted by us. Concretely:
+
+1. **Candidate pool** — popular, well-reviewed C/C++ repositories, ranked by reach and
+   spread so the set isn't one ecosystem. The final 16 span databases / KV stores
+   (dragonfly, valkey), systems & runtimes (libuv, micropython, nginx, php-src),
+   foundational libraries (nlohmann/json, opencv, tesseract), and apps / engines
+   (godot, carla, fastfetch, microsoft/terminal) — balanced **7 C / 9 C++**.
+2. **PR mining** — within each repo we looked for merged PRs where a **real defect was
+   raised and fixed during human review** (a "resolved-in-review" signal), so each
+   golden traces back to a confirmed, localized bug rather than a style nit.
+3. **Golden vetting** — every candidate golden had to be *objective*, *localizable to a
+   specific file/line*, *discoverable from the diff + surrounding context*,
+   *confirmed real*, *correctly categorized*, and *cleanly phrased* (what is wrong and
+   where, with no fix leakage). Goldens that didn't survive this bar were dropped.
+4. **Commit pinning + fork verification** — each surviving PR is pinned to the exact
+   `base_sha..head_sha` the golden was verified against. We re-checked every fork at its
+   pinned head and removed goldens whose fix was already present there, so a reviewer is
+   only ever credited for finding a bug that is actually live in the reviewed code.
+
+The result is 16 PRs / 20 goldens that are small enough to review fairly, varied enough
+to be representative, and pinned so every reviewer sees an identical surface.
 
 ## Browse the bot reviews
 
@@ -221,3 +262,7 @@ cpp_benchmark/
 The golden findings are derived from public pull requests on the upstream projects;
 each golden links back to its source. This benchmark is maintained by CloudAEye and
 provided for the community to evaluate and compare C/C++ code-review tools.
+
+Methodology and layout are inspired by
+[withmartian/code-review-benchmark](https://github.com/withmartian/code-review-benchmark);
+this project adapts that approach specifically to C and C++.
