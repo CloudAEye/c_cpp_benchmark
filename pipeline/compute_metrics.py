@@ -43,7 +43,7 @@ def prf(tp, fp, fn):
 
 def main():
     ap = argparse.ArgumentParser(description="Compute the C/C++ review leaderboard.")
-    default_judge = os.environ.get("MARTIAN_MODEL", "claude-sonnet-4-5-20250929").replace("/", "_")
+    default_judge = os.environ.get("MARTIAN_MODEL", "anthropic/claude-sonnet-4-5-20250929").replace("/", "_")
     ap.add_argument("--judge", default=default_judge,
                     help="Judge model dir under results/ (default: %(default)s)")
     ap.add_argument("--benchmark", default="benchmark_final16.json",

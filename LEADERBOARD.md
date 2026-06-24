@@ -1,12 +1,17 @@
 # C/C++ Code-Review Leaderboard
 
 **Dataset:** 16 real merged PRs (7 C / 9 C++), 20 human-verified golden findings
-**Judge:** `claude-sonnet-4-5-20250929` (LLM-as-judge, identical for every reviewer)
+**Judge (default):** `anthropic_claude-sonnet-4-5-20250929` — also scored by
+`anthropic_claude-opus-4-5-20251101` and `openai_gpt-5.2`
 **Last updated:** 2026-06-24
 
 Every reviewer is scored by the same scrape-and-judge pipeline on the same forks.
 Reproduce the scores from `results/` with `python pipeline/compute_metrics.py`
-(no API key needed to read the existing scores).
+(no API key needed to read the existing scores); add `--judge <name>` to view a
+different judge.
+
+**CloudAEye ranks #1 under all three judge models** (the bot order shuffles slightly
+between judges; CloudAEye's lead does not).
 
 | Rank | Reviewer | TP | FP | FN | Precision | Recall | F1 |
 |-----:|----------|---:|---:|---:|----------:|-------:|---:|

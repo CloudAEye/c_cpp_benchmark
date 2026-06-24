@@ -129,8 +129,10 @@ class LLMJudge:
                         },
                         {"role": "user", "content": prompt},
                     ],
-                    "temperature": 0.0,
                 }
+                # gpt-5 / o-series reasoning models reject a non-default temperature.
+                if "gpt-5" not in self.model and not self.model.startswith(("o1", "o3", "o4")):
+                    kwargs["temperature"] = 0.0
                 if self.structured_output:
                     kwargs["response_format"] = {
                         "type": "json_schema",

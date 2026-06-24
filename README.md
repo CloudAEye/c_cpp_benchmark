@@ -76,8 +76,10 @@ each tool posted — that's the raw material behind the scores in `evaluations.j
 4. **Aggregate.** Precision = TP/(TP+FP), Recall = TP/(TP+FN), F1 = their harmonic
    mean, summed across all 16 PRs.
 
-The judge is fixed to **`claude-sonnet-4-5-20250929`** so all reviewers are compared
-on equal footing.
+All reviewers are scored by the **same judge** so the comparison is fair. The
+benchmark ships results from **three judge models** — `anthropic_claude-sonnet-4-5-20250929`
+(default), `anthropic_claude-opus-4-5-20251101`, and `openai_gpt-5.2` — so you can
+confirm the ranking holds regardless of who judges.
 
 ---
 
@@ -97,9 +99,17 @@ table from them:
 python pipeline/compute_metrics.py
 ```
 
-This reads `results/claude-sonnet-4-5-20250929/evaluations.json` and prints the
-per-PR breakdown plus the ranked leaderboard. Every tool present in that file is
+This reads `results/anthropic_claude-sonnet-4-5-20250929/evaluations.json` and prints
+the per-PR breakdown plus the ranked leaderboard. Every tool present in that file is
 scored automatically.
+
+The benchmark is scored by **three independent judge models** so you can see the
+ranking doesn't depend on any single judge. Switch with `--judge`:
+
+```bash
+python pipeline/compute_metrics.py --judge anthropic_claude-opus-4-5-20251101
+python pipeline/compute_metrics.py --judge openai_gpt-5.2
+```
 
 ### B) Add your own reviewer
 
@@ -178,9 +188,13 @@ cpp_benchmark/
 │   ├── step3_judge_comments.py    # LLM-judge candidates vs goldens -> TP/FP/FN
 │   ├── step4_export_by_tool.py    # (optional) export results to .xlsx
 │   └── compute_metrics.py         # build the leaderboard from judged evaluations
-└── results/
-    └── claude-sonnet-4-5-20250929/
-        └── evaluations.json       # per-tool TP/FP/FN from the judge (drives the leaderboard)
+└── results/                       # one folder per judge model (all score the same forks)
+    ├── anthropic_claude-sonnet-4-5-20250929/
+    │   └── evaluations.json       # per-tool TP/FP/FN (default judge — drives the leaderboard)
+    ├── anthropic_claude-opus-4-5-20251101/
+    │   └── evaluations.json
+    └── openai_gpt-5.2/
+        └── evaluations.json
 ```
 
 > The intermediate scrape/extract files (`benchmark_data.json`, `candidates.json`,
@@ -190,11 +204,10 @@ cpp_benchmark/
 
 ## Notes & caveats
 
-- **Same judge required.** Scores are only comparable when produced by the same judge
-  model. The bundled `evaluations.json` was judged by `claude-sonnet-4-5-20250929`;
-  keep using that model so your submission is comparable. (Re-judging the existing
-  tools with a different model would require re-running them, since their raw comments
-  aren't shipped — browse them on the forks instead.)
+- **Same judge required.** Scores are only comparable within one judge. The bundled
+  results cover three judges (`results/<judge>/evaluations.json`); pick one with
+  `--judge` and judge your own tool with the matching `MARTIAN_MODEL` so it lands in
+  the same folder. The per-judge folder name is the model id with `/` replaced by `_`.
 - **Judge non-determinism.** LLM judges are not perfectly deterministic; expect ±1
   finding of run-to-run jitter. Treat very small F1 gaps as ties.
 - **No data in the prompt.** A fair score comes from running your reviewer on the
