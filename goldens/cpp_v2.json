@@ -1,0 +1,358 @@
+[
+  {
+    "pr_title": "Fix compile error when using nlohmann ordered_map with WITH_DEFAULT macros",
+    "url": "https://github.com/nlohmann/json/pull/5163",
+    "repo": "nlohmann/json",
+    "lang": "C++",
+    "source_signal": "resolved_in_review",
+    "base_sha": "f0bf4c731a53aab29ebde0234385b9e63bf70dcd",
+    "head_sha": "ee4ee35212f2c168199a8d6aad434869c0297252",
+    "comments": [
+      {
+        "comment": "tests/src/unit-regression2.cpp unconditionally suppresses -Wself-assign-overloaded for Clang, but older Clang versions do not recognize that warning group and emit an unknown-warning diagnostic during the test build.",
+        "severity": "Low",
+        "category": "code_clarity",
+        "path": "tests/src/unit-regression2.cpp",
+        "root_cause_group": "rc4",
+        "expected_evidence": "Point to tests/src/unit-regression2.cpp unconditionally suppressing -Wself-assign-overloaded with DOCTEST_CLANG_SUPPRESS_WARNING, which triggers unknown-warning diagnostics on older Clang.",
+        "jury_score": 87
+      }
+    ]
+  },
+  {
+    "pr_title": "chore: disk backed backpressure for connections",
+    "url": "https://github.com/dragonflydb/dragonfly/pull/6011",
+    "repo": "dragonflydb/dragonfly",
+    "lang": "C++",
+    "source_signal": "rejected",
+    "base_sha": "0ceda9f2777a495190beb8b6be562b5c9b3e558c",
+    "head_sha": "607c9bcca200124745af6c0d9781f4db4b8d3a81",
+    "comments": [
+      {
+        "comment": "`DiskBackedBackpressureQueue::unique_id` is incremented without synchronization in the constructor. Creating queues on multiple threads races on this shared counter and can assign duplicate or corrupted IDs.",
+        "severity": "High",
+        "category": "concurrency_safety",
+        "path": "src/facade/dragonfly_connection.cc",
+        "root_cause_group": "rc7",
+        "expected_evidence": "Point to the static `size_t Connection::DiskBackedBackpressureQueue::unique_id` and the unsynchronized `id_ = ++unique_id;` in the constructor.",
+        "jury_score": 90.5
+      },
+      {
+        "comment": "Backpressure reload reconstructs arguments by splitting the serialized command on `\\0` in `LoadBackpressureFromDiskIfNeeded`. This loses correctness for binary-safe arguments that may contain embedded NUL bytes.",
+        "severity": "High",
+        "category": "logic_error",
+        "path": "src/facade/dragonfly_connection.cc",
+        "root_cause_group": "rc6",
+        "expected_evidence": "Point to `absl::StrSplit(read, '\\0', absl::SkipEmpty())` after reconstructing command bytes in `LoadBackpressureFromDiskIfNeeded`.",
+        "jury_score": 72
+      }
+    ]
+  },
+  {
+    "pr_title": "Logo (Builtin): adds LimeOS logo",
+    "url": "https://github.com/fastfetch-cli/fastfetch/pull/2137",
+    "repo": "fastfetch-cli/fastfetch",
+    "lang": "C",
+    "source_signal": "resolved_in_review",
+    "base_sha": "c851c39837e60465c676be5902318b6435eba1e2",
+    "head_sha": "8561bf79b269ee8be1105c642aa8e4f1576d9d7b",
+    "comments": [
+      {
+        "comment": "The LimeOS logo entry in `src/logo/builtin.c` uses `FF_COLOR_FG_WHITE` for `.colors`, `.colorKeys`, and `.colorTitle`, making the output invisible on terminals with a light background.",
+        "severity": "Medium",
+        "category": "edge_case_handling",
+        "path": "src/logo/builtin.c",
+        "root_cause_group": "rc2",
+        "expected_evidence": "In src/logo/builtin.c, the LimeOS entry sets `.colors`, `.colorKeys`, and `.colorTitle` to `FF_COLOR_FG_WHITE`, making the logo invisible on light-background terminals.",
+        "jury_score": 81.5
+      }
+    ]
+  },
+  {
+    "pr_title": "fix(‎LibCarla): port lane marking, waypoint  loop, lane corners, and pugixml null fixes",
+    "url": "https://github.com/carla-simulator/carla/pull/9652",
+    "repo": "carla-simulator/carla",
+    "lang": "C++",
+    "source_signal": "resolved_in_review",
+    "base_sha": "815b8ba2c92cd25ab4789565e7563fe86ddfc83a",
+    "head_sha": "4ed53703369b03db47284c920c70ff17081bcd4c",
+    "comments": [
+      {
+        "comment": "In Map.cpp, the new `continue` on degenerate `edges` skips the `s_current += distancebetweentrees` step at the end of the loop. If `edges.first == edges.second` persists, the loop no longer makes progress and can hang.",
+        "severity": "High",
+        "category": "logic_error",
+        "path": "LibCarla/source/carla/road/Map.cpp",
+        "root_cause_group": "rc3",
+        "expected_evidence": "Point to Map.cpp's while loop where `if (edges.first == edges.second) continue;` bypasses the bottom-of-loop `s_current += distancebetweentrees;` increment.",
+        "jury_score": 70.5
+      },
+      {
+        "comment": "In MeshFactory.cpp, the refactor changes lane-mark edge computation to always use the extra lane width, which alters the previous solid/final-segment behavior that used zero extra width. This shifts lane marking positions on roads with non-zero extra lane width.",
+        "severity": "Medium",
+        "category": "logic_error",
+        "path": "LibCarla/source/carla/road/MeshFactory.cpp",
+        "root_cause_group": "rc1",
+        "expected_evidence": "Point to MeshFactory.cpp call sites where ComputeEdgesForLanemark replaced direct GetCornerPositions(..., 0) behavior and now always uses extra lane width.",
+        "jury_score": 66.5
+      }
+    ]
+  },
+  {
+    "pr_title": "fix(Unreal): return traffic sign bounding box from first trigger volume",
+    "url": "https://github.com/carla-simulator/carla/pull/9653",
+    "repo": "carla-simulator/carla",
+    "lang": "C++",
+    "source_signal": "resolved_in_review",
+    "base_sha": "b2948a2bad73e3188bf1f3e0133389ebcd6991c9",
+    "head_sha": "7649e0aae8ef8c725d86ba9758c642fef310261f",
+    "comments": [
+      {
+        "comment": "BoundingBoxCalculator.cpp reads the first element of TrafficSign->GetTriggerVolumes() as a UBoxComponent without checking whether that entry is null, so this path can dereference a null trigger volume.",
+        "severity": "High",
+        "category": "error_handling",
+        "path": "Unreal/CarlaUnreal/Plugins/Carla/Source/Carla/Util/BoundingBoxCalculator.cpp",
+        "root_cause_group": "rc2",
+        "expected_evidence": "Point to BoundingBoxCalculator.cpp indexing TriggerVolumes[0] without validating that the first entry is non-null before dereferencing it.",
+        "jury_score": 94.5
+      }
+    ]
+  },
+  {
+    "pr_title": "win,fs: handle AppExecLink reparse points in fstat",
+    "url": "https://github.com/libuv/libuv/pull/4936",
+    "repo": "libuv/libuv",
+    "lang": "C",
+    "source_signal": "rejected",
+    "base_sha": "3e9ae1bca07f8155bc4249a21ec41ca2c86fdb93",
+    "head_sha": "fa3aef007ade8c7d0a4f7f38c5d61cd8950271ff",
+    "comments": [
+      {
+        "comment": "After `CloseHandle(handle)` at the bottom of the loop body in `fs__create_file`, `handle` is not set to `INVALID_HANDLE_VALUE`; if the loop runs all 32 iterations without resolving the path, the function falls through to `clean_and_ret_handle` and returns a closed (invalid) handle to the caller.",
+        "severity": "High",
+        "category": "logic_error",
+        "path": "src/win/fs.c",
+        "root_cause_group": "rc3",
+        "expected_evidence": "`CloseHandle(handle)` at the bottom of the loop body in `fs__create_file` without setting `handle = INVALID_HANDLE_VALUE`, causing the function to return a closed handle when the loop exhausts all 32 iterations.",
+        "jury_score": 94
+      }
+    ]
+  },
+  {
+    "pr_title": "Wrap project titles",
+    "url": "https://github.com/godotengine/godot/pull/119999",
+    "repo": "godotengine/godot",
+    "lang": "C++",
+    "source_signal": "resolved_in_review",
+    "base_sha": "72cc0fc9a75bf041e84b9d37e7e31e17cb114a9e",
+    "head_sha": "532e204e5cd3216549ed18ccb96308da8f90e06f",
+    "comments": [
+      {
+        "comment": "In `editor/project_manager/project_list.cpp` under `NOTIFICATION_READY`, the callable for `update_title_size` is bound with an extra argument even though `update_title_size()` takes no parameters. This makes the deferred call and `size_changed` signal invocation fail with an argument-count error.",
+        "severity": "Medium",
+        "category": "logic_error",
+        "path": "editor/project_manager/project_list.cpp",
+        "root_cause_group": "rc1",
+        "expected_evidence": "Point at project_list.cpp's bound callable in NOTIFICATION_READY where bind(false) adds an argument to update_title_size(), which is later defined with no parameters.",
+        "jury_score": 92
+      }
+    ]
+  },
+  {
+    "pr_title": "win: fix watch loop logic",
+    "url": "https://github.com/libuv/libuv/pull/5013",
+    "repo": "libuv/libuv",
+    "lang": "C",
+    "source_signal": "resolved_in_review",
+    "base_sha": "fa38eb43df15562492c03cfa54122f2430b275f0",
+    "head_sha": "7cf90b0145821d949f919b07578d0c63b20da3cb",
+    "comments": [
+      {
+        "comment": "The deletion-path check in src/win/fs-event.c uses the wrong substring literal for the final handle path format. Matching \"$Extend\\$Deleted\" here can miss the zombie directory path that appears as \"\\\\$Extend\\\\$Deleted\\\\\".",
+        "severity": "Medium",
+        "category": "logic_error",
+        "path": "src/win/fs-event.c",
+        "root_cause_group": "rc1",
+        "expected_evidence": "Point at the wcsstr check in src/win/fs-event.c that matches \"$Extend\\$Deleted\" without the surrounding backslashes used by the final path format.",
+        "jury_score": 91.5
+      }
+    ]
+  },
+  {
+    "pr_title": "Allow mpy-cross to exclude source lines",
+    "url": "https://github.com/micropython/micropython/pull/19080",
+    "repo": "micropython/micropython",
+    "lang": "C",
+    "source_signal": "resolved_in_review",
+    "base_sha": "44a569b637b56764582c3b652e7bc51b53c0df1d",
+    "head_sha": "b8de9f797b5a8ffbac49d676ab746dce94d0a5b5",
+    "comments": [
+      {
+        "comment": "In mpy-cross/main.c, parsing for source-lines and no-source-lines is inside the MICROPY_EMIT_NATIVE conditional, so these options are ignored when native emit support is disabled.",
+        "severity": "Medium",
+        "category": "logic_error",
+        "path": "mpy-cross/main.c",
+        "root_cause_group": "rc2",
+        "expected_evidence": "Point to mpy-cross/main.c where source-lines/no-source-lines option parsing is nested under #if MICROPY_EMIT_NATIVE, making those options unavailable when native emit is off.",
+        "jury_score": 90.5
+      }
+    ]
+  },
+  {
+    "pr_title": "SSL: add $ssl_sigalgs variable",
+    "url": "https://github.com/nginx/nginx/pull/1361",
+    "repo": "nginx/nginx",
+    "lang": "C",
+    "source_signal": "resolved_in_review",
+    "base_sha": "c5f2afd50e63c94f3696d2d18bdd79ac70643eec",
+    "head_sha": "dffa46e27bd103a2d601e4a75e55628e5f644146",
+    "comments": [
+      {
+        "comment": "The OpenSSL-1.0.2+ fallback branch in src/event/ngx_event_openssl.c calls SSL_get_sigalgs() behind a version check that does not exclude AWS-LC, so this code can fail to compile when that function is unavailable.",
+        "severity": "Medium",
+        "category": "code_signature",
+        "path": "src/event/ngx_event_openssl.c",
+        "root_cause_group": "rc1",
+        "expected_evidence": "Point to the #elif branch in src/event/ngx_event_openssl.c that calls SSL_get_sigalgs() under an OPENSSL_VERSION_NUMBER check that can still include AWS-LC, where the API is absent.",
+        "jury_score": 90.5
+      }
+    ]
+  },
+  {
+    "pr_title": "feat(facade): extend ok_main with sharded SET/GET and async dispatch",
+    "url": "https://github.com/dragonflydb/dragonfly/pull/7545",
+    "repo": "dragonflydb/dragonfly",
+    "lang": "C++",
+    "source_signal": "resolved_in_review",
+    "base_sha": "e87e04041c4d771ff76f2f52110e9d2e08b1b1a6",
+    "head_sha": "0c7a33f78d7423571159ed731549b751ba5a3f1b",
+    "comments": [
+      {
+        "comment": "AsyncCmd::handle in src/facade/ok_main.cc is unused dead state. The coroutine registration path uses ResolveAwaiter::await_suspend instead, so this member has no effect.",
+        "severity": "Low",
+        "category": "dead_import",
+        "path": "src/facade/ok_main.cc",
+        "root_cause_group": "rc1",
+        "expected_evidence": "Point to src/facade/ok_main.cc AsyncCmd::handle, which is declared but never read or used in the shown coroutine flow.",
+        "jury_score": 89.5
+      }
+    ]
+  },
+  {
+    "pr_title": "Setting to set pane highlight active, inactive and broadcast color",
+    "url": "https://github.com/microsoft/terminal/pull/18953",
+    "repo": "microsoft/terminal",
+    "lang": "C++",
+    "source_signal": "rejected",
+    "base_sha": "a258d7d3dfab1f5f6da52ed02d285927cb6bb70b",
+    "head_sha": "ce1ba031d52844a29dd244ba23b9799b8023a5d4",
+    "comments": [
+      {
+        "comment": "In `TerminalPage::_updatePaneResources`, the result of `_colorFromKey(res, requestedTheme, broadcastColorKey)` is discarded in the `broadcastColorKey` branch, so the broadcast border color never updates from the resource lookup.",
+        "severity": "Medium",
+        "category": "logic_error",
+        "path": "src/cascadia/TerminalApp/TerminalPage.cpp",
+        "root_cause_group": "rc2",
+        "expected_evidence": "Point to the `if (res.HasKey(broadcastColorKey))` block in `TerminalPage::_updatePaneResources` where `_colorFromKey(...)` is called and its return value is ignored.",
+        "jury_score": 88.5
+      }
+    ]
+  },
+  {
+    "pr_title": "fix(features2d): fix UB left-shift of negative value in BRISK subpixel2D",
+    "url": "https://github.com/opencv/opencv/pull/29240",
+    "repo": "opencv/opencv",
+    "lang": "C++",
+    "source_signal": "resolved_in_review",
+    "base_sha": "aed41fdabe3c5381395e2a7a8272c7519f3c289f",
+    "head_sha": "a26c9b63fd92fbffa35c14cf922e630070ea0755",
+    "comments": [
+      {
+        "comment": "The inner `<< 1` in the coeff6 expression at modules/features2d/src/brisk.cpp still left-shifts a signed intermediate that can be negative, so undefined behavior remains.",
+        "severity": "High",
+        "category": "logic_error",
+        "path": "modules/features2d/src/brisk.cpp",
+        "root_cause_group": "rc2",
+        "expected_evidence": "Point at the remaining `<< 1` inside the coeff6 expression in modules/features2d/src/brisk.cpp, where the summed operand can be negative.",
+        "jury_score": 87.5
+      }
+    ]
+  },
+  {
+    "pr_title": "Update hocrrenderer.cpp  for solving the issue #4045",
+    "url": "https://github.com/tesseract-ocr/tesseract/pull/4138",
+    "repo": "tesseract-ocr/tesseract",
+    "lang": "C++",
+    "source_signal": "rejected",
+    "base_sha": "063ad31a6018af928816ead25ffbb7584f667d22",
+    "head_sha": "3173bfeda9f47e010c270363d6841f237b671fc9",
+    "comments": [
+      {
+        "comment": "`return true` is placed on line 506 of BeginDocumentHandler immediately after `SetContentType(\"application/xhtml+xml\")`, making all subsequent AppendString calls unreachable dead code and producing an empty document body.",
+        "severity": "High",
+        "category": "logic_error",
+        "path": "src/api/hocrrenderer.cpp",
+        "root_cause_group": "rc2",
+        "expected_evidence": "In BeginDocumentHandler, `return true;` is placed immediately after `SetContentType(...)`, making all subsequent AppendString calls unreachable dead code.",
+        "jury_score": 87
+      }
+    ]
+  },
+  {
+    "pr_title": "Implement \"Followup improvements for ext/uri\" RFC - URI type detection",
+    "url": "https://github.com/php/php-src/pull/22075",
+    "repo": "php/php-src",
+    "lang": "C",
+    "source_signal": "resolved_in_review",
+    "base_sha": "27d7b799c0a13578ee0506b428b8ddc209ffb010",
+    "head_sha": "da11b7fc4d0321a1c3876c71fcb07b990b5d6cb8",
+    "comments": [
+      {
+        "comment": "The first parameter of php_uri_parser_rfc3986_uri_type_read in uri_parser_rfc3986.c is declared as void* instead of the concrete type php_uri_parser_rfc3986_uris*, inconsistent with all other functions in this file.",
+        "severity": "Medium",
+        "category": "code_signature",
+        "path": "ext/uri/uri_parser_rfc3986.c",
+        "root_cause_group": "rc3",
+        "expected_evidence": "php_uri_parser_rfc3986_uri_type_read in uri_parser_rfc3986.c declares its first parameter as void* but the header and all sibling functions use php_uri_parser_rfc3986_uris*",
+        "jury_score": 86
+      },
+      {
+        "comment": "The declaration of php_uri_parser_rfc3986_uri_type_read in uri_parser_rfc3986.h declares the first parameter as void* instead of the concrete type php_uri_parser_rfc3986_uris*, unlike all other declarations in this header.",
+        "severity": "Medium",
+        "category": "code_signature",
+        "path": "ext/uri/uri_parser_rfc3986.h",
+        "root_cause_group": "rc3",
+        "expected_evidence": "The declaration of php_uri_parser_rfc3986_uri_type_read in uri_parser_rfc3986.h uses void* for the first parameter instead of php_uri_parser_rfc3986_uris*",
+        "jury_score": 86
+      }
+    ]
+  },
+  {
+    "pr_title": "Fix use after free",
+    "url": "https://github.com/valkey-io/valkey/pull/3836",
+    "repo": "valkey-io/valkey",
+    "lang": "C",
+    "source_signal": "rejected",
+    "base_sha": "ddadbdf5df2dc3c2f6af67e21091a77b548e9021",
+    "head_sha": "9321c56ac2bad587e274764b91a9fea5b34a5e54",
+    "comments": [
+      {
+        "comment": "In src/cluster.c:isValidAuxChar, `isalnum` is still called with `c` instead of the unsigned-cast `ch`. Passing a negative non-EOF value to `isalnum` is undefined behavior on platforms with signed `char`.",
+        "severity": "Medium",
+        "category": "logic_error",
+        "path": "src/cluster.c",
+        "root_cause_group": "rc1",
+        "expected_evidence": "Point to src/cluster.c:isValidAuxChar using isalnum(c) after casting to unsigned char ch, which leaves ctype called on possibly negative values.",
+        "jury_score": 87.5
+      },
+      {
+        "comment": "In `isValidAuxChar` (cluster.c), `strchr(invalid_charset, c)` passes the original signed `int c` instead of the already-declared `unsigned char ch`; high-bit byte values sign-extend to negative integers, producing undefined behavior per C11 §7.4¶1.",
+        "severity": "High",
+        "category": "edge_case_handling",
+        "path": "src/cluster.c",
+        "root_cause_group": "rc1",
+        "expected_evidence": "In isValidAuxChar, `strchr(invalid_charset, c)` uses the original signed int `c` instead of `unsigned char ch`, same UB as the isalnum call above.",
+        "jury_score": 76
+      }
+    ]
+  }
+]

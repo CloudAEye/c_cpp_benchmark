@@ -1,0 +1,130 @@
+[
+  {
+    "tool": "native",
+    "original_pr_url": "https://github.com/nlohmann/json/pull/5163",
+    "new_repo": "headerslow/json-pr5163-7b94",
+    "new_pr_url": "https://github.com/headerslow/json-pr5163-7b94/pull/1",
+    "base_sha": "f0bf4c731a53aab29ebde0234385b9e63bf70dcd",
+    "head_sha": "ee4ee35212f2c168199a8d6aad434869c0297252"
+  },
+  {
+    "tool": "native",
+    "original_pr_url": "https://github.com/dragonflydb/dragonfly/pull/6011",
+    "new_repo": "headerslow/dragonfly-pr6011-e03b",
+    "new_pr_url": "https://github.com/headerslow/dragonfly-pr6011-e03b/pull/1",
+    "base_sha": "0ceda9f2777a495190beb8b6be562b5c9b3e558c",
+    "head_sha": "607c9bcca200124745af6c0d9781f4db4b8d3a81"
+  },
+  {
+    "tool": "native",
+    "original_pr_url": "https://github.com/fastfetch-cli/fastfetch/pull/2137",
+    "new_repo": "headerslow/fastfetch-pr2137-b206",
+    "new_pr_url": "https://github.com/headerslow/fastfetch-pr2137-b206/pull/1",
+    "base_sha": "c851c39837e60465c676be5902318b6435eba1e2",
+    "head_sha": "8561bf79b269ee8be1105c642aa8e4f1576d9d7b"
+  },
+  {
+    "tool": "native",
+    "original_pr_url": "https://github.com/carla-simulator/carla/pull/9652",
+    "new_repo": "headerslow/carla-pr9652-b52c",
+    "new_pr_url": "https://github.com/headerslow/carla-pr9652-b52c/pull/1",
+    "base_sha": "815b8ba2c92cd25ab4789565e7563fe86ddfc83a",
+    "head_sha": "4ed53703369b03db47284c920c70ff17081bcd4c"
+  },
+  {
+    "tool": "native",
+    "original_pr_url": "https://github.com/carla-simulator/carla/pull/9653",
+    "new_repo": "headerslow/carla-pr9653-56f5",
+    "new_pr_url": "https://github.com/headerslow/carla-pr9653-56f5/pull/1",
+    "base_sha": "b2948a2bad73e3188bf1f3e0133389ebcd6991c9",
+    "head_sha": "7649e0aae8ef8c725d86ba9758c642fef310261f"
+  },
+  {
+    "tool": "native",
+    "original_pr_url": "https://github.com/libuv/libuv/pull/4936",
+    "new_repo": "headerslow/libuv-pr4936-28e0",
+    "new_pr_url": "https://github.com/headerslow/libuv-pr4936-28e0/pull/1",
+    "base_sha": "3e9ae1bca07f8155bc4249a21ec41ca2c86fdb93",
+    "head_sha": "fa3aef007ade8c7d0a4f7f38c5d61cd8950271ff"
+  },
+  {
+    "tool": "native",
+    "original_pr_url": "https://github.com/godotengine/godot/pull/119999",
+    "new_repo": "headerslow/godot-pr119999-0a2c",
+    "new_pr_url": "https://github.com/headerslow/godot-pr119999-0a2c/pull/1",
+    "base_sha": "72cc0fc9a75bf041e84b9d37e7e31e17cb114a9e",
+    "head_sha": "532e204e5cd3216549ed18ccb96308da8f90e06f"
+  },
+  {
+    "tool": "native",
+    "original_pr_url": "https://github.com/libuv/libuv/pull/5013",
+    "new_repo": "headerslow/libuv-pr5013-1d8c",
+    "new_pr_url": "https://github.com/headerslow/libuv-pr5013-1d8c/pull/1",
+    "base_sha": "fa38eb43df15562492c03cfa54122f2430b275f0",
+    "head_sha": "7cf90b0145821d949f919b07578d0c63b20da3cb"
+  },
+  {
+    "tool": "native",
+    "original_pr_url": "https://github.com/micropython/micropython/pull/19080",
+    "new_repo": "headerslow/micropython-pr19080-91b0",
+    "new_pr_url": "https://github.com/headerslow/micropython-pr19080-91b0/pull/1",
+    "base_sha": "44a569b637b56764582c3b652e7bc51b53c0df1d",
+    "head_sha": "b8de9f797b5a8ffbac49d676ab746dce94d0a5b5"
+  },
+  {
+    "tool": "native",
+    "original_pr_url": "https://github.com/nginx/nginx/pull/1361",
+    "new_repo": "headerslow/nginx-pr1361-0266",
+    "new_pr_url": "https://github.com/headerslow/nginx-pr1361-0266/pull/1",
+    "base_sha": "c5f2afd50e63c94f3696d2d18bdd79ac70643eec",
+    "head_sha": "dffa46e27bd103a2d601e4a75e55628e5f644146"
+  },
+  {
+    "tool": "native",
+    "original_pr_url": "https://github.com/dragonflydb/dragonfly/pull/7545",
+    "new_repo": "headerslow/dragonfly-pr7545-a5e7",
+    "new_pr_url": "https://github.com/headerslow/dragonfly-pr7545-a5e7/pull/1",
+    "base_sha": "e87e04041c4d771ff76f2f52110e9d2e08b1b1a6",
+    "head_sha": "0c7a33f78d7423571159ed731549b751ba5a3f1b"
+  },
+  {
+    "tool": "native",
+    "original_pr_url": "https://github.com/microsoft/terminal/pull/18953",
+    "new_repo": "headerslow/terminal-pr18953-4b93",
+    "new_pr_url": "https://github.com/headerslow/terminal-pr18953-4b93/pull/1",
+    "base_sha": "a258d7d3dfab1f5f6da52ed02d285927cb6bb70b",
+    "head_sha": "ce1ba031d52844a29dd244ba23b9799b8023a5d4"
+  },
+  {
+    "tool": "native",
+    "original_pr_url": "https://github.com/opencv/opencv/pull/29240",
+    "new_repo": "headerslow/opencv-pr29240-5c5a",
+    "new_pr_url": "https://github.com/headerslow/opencv-pr29240-5c5a/pull/1",
+    "base_sha": "aed41fdabe3c5381395e2a7a8272c7519f3c289f",
+    "head_sha": "a26c9b63fd92fbffa35c14cf922e630070ea0755"
+  },
+  {
+    "tool": "native",
+    "original_pr_url": "https://github.com/tesseract-ocr/tesseract/pull/4138",
+    "new_repo": "headerslow/tesseract-pr4138-434f",
+    "new_pr_url": "https://github.com/headerslow/tesseract-pr4138-434f/pull/1",
+    "base_sha": "063ad31a6018af928816ead25ffbb7584f667d22",
+    "head_sha": "3173bfeda9f47e010c270363d6841f237b671fc9"
+  },
+  {
+    "tool": "native",
+    "original_pr_url": "https://github.com/php/php-src/pull/22075",
+    "new_repo": "headerslow/php-src-pr22075-ccc1",
+    "new_pr_url": "https://github.com/headerslow/php-src-pr22075-ccc1/pull/1",
+    "base_sha": "27d7b799c0a13578ee0506b428b8ddc209ffb010",
+    "head_sha": "da11b7fc4d0321a1c3876c71fcb07b990b5d6cb8"
+  },
+  {
+    "tool": "native",
+    "original_pr_url": "https://github.com/valkey-io/valkey/pull/3836",
+    "new_repo": "headerslow/valkey-pr3836-8702",
+    "new_pr_url": "https://github.com/headerslow/valkey-pr3836-8702/pull/1",
+    "base_sha": "ddadbdf5df2dc3c2f6af67e21091a77b548e9021",
+    "head_sha": "9321c56ac2bad587e274764b91a9fea5b34a5e54"
+  }
+]
