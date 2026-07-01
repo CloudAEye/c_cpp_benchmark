@@ -11,9 +11,9 @@ venv/
 # Local exports
 *.xlsx
 
-# The published judge folder (results/claude-sonnet-4-5-20250929/evaluations.json)
-# is committed so the leaderboard reproduces out of the box. Locally-generated
-# scrape/extract artifacts are not committed:
-results/benchmark_data.json
+# The published judge folders (results/*/evaluations.json) and the scrubbed raw
+# scrape (results/benchmark_data.json) are committed so the pipeline reproduces
+# and is inspectable out of the box. Per-judge extraction/dedup intermediates
+# are not committed (regenerate by re-running step2/step2_5):
 results/**/candidates.json
 results/**/dedup_groups.json

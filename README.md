@@ -5,7 +5,7 @@ merged pull requests with human-verified bug findings. It measures how well a
 reviewer catches genuine issues (recall) without drowning them in noise (precision),
 and produces a single F1 leaderboard.
 
-➡️ **[Current leaderboard](LEADERBOARD.md)**
+➡️ **[Current leaderboard](LEADERBOARD.md)** · **[Full benchmark report](https://www.cloudaeye.com/products/code-review/benchmark-2026/index-cpp.html)**
 
 Everything needed to reproduce the leaderboard and to score a new reviewer is in
 this folder. The raw reviews each bot posted can be read on the live forks — see
@@ -218,7 +218,7 @@ cpp_benchmark/
 ├── .env.example                   # copy to .env and fill in (never committed)
 ├── benchmark_final16.json         # the 16 PRs + pinned SHAs + 20 golden findings
 ├── goldens/
-│   └── cpp_v2.json                # slim golden set consumed by step1 (--golden goldens)
+│   └── cpp_goldens.json           # slim golden set consumed by step1 (--golden goldens)
 ├── manifests/
 │   └── forks_reference_headerslow.json   # the maintainer's reference forks (example manifest)
 ├── pipeline/
@@ -230,6 +230,7 @@ cpp_benchmark/
 │   ├── step4_export_by_tool.py    # (optional) export results to .xlsx
 │   └── compute_metrics.py         # build the leaderboard from judged evaluations
 └── results/                       # one folder per judge model (all score the same forks)
+    ├── benchmark_data.json        # raw scraped review comments for every tool, keyed by PR
     ├── anthropic_claude-sonnet-4-5-20250929/
     │   └── evaluations.json       # per-tool TP/FP/FN (default judge — drives the leaderboard)
     ├── anthropic_claude-opus-4-5-20251101/
@@ -238,10 +239,11 @@ cpp_benchmark/
         └── evaluations.json
 ```
 
-> The intermediate scrape/extract files (`benchmark_data.json`, `candidates.json`,
-> `dedup_groups.json`) are generated locally when you score a reviewer (steps 1–3
-> below) and are not shipped. The raw bot reviews can be read on the live forks
-> linked under [Browse the bot reviews](#browse-the-bot-reviews).
+> `results/benchmark_data.json` (the raw scrape) is committed so the pipeline is
+> reproducible and inspectable offline. The per-judge extraction/dedup intermediates
+> (`candidates.json`, `dedup_groups.json`) are **not** shipped — regenerate them
+> locally by running steps 1–3 below. The raw bot reviews can also be read live on
+> the forks linked under [Browse the bot reviews](#browse-the-bot-reviews).
 
 ## Notes & caveats
 
@@ -259,10 +261,14 @@ cpp_benchmark/
 
 ## License & provenance
 
+This repository is licensed under the [MIT License](LICENSE) (Copyright (c) 2026
+CloudAEye).
+
 The golden findings are derived from public pull requests on the upstream projects;
 each golden links back to its source. This benchmark is maintained by CloudAEye and
 provided for the community to evaluate and compare C/C++ code-review tools.
 
 Methodology and layout are inspired by
-[withmartian/code-review-benchmark](https://github.com/withmartian/code-review-benchmark);
-this project adapts that approach specifically to C and C++.
+[withmartian/code-review-benchmark](https://github.com/withmartian/code-review-benchmark)
+(MIT License); this project adapts that approach specifically to C and C++. See
+[`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) for the upstream license text.
