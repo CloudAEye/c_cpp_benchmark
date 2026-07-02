@@ -205,8 +205,7 @@
       "errors_count": 0,
       "precision": 0.0,
       "recall": 0.0,
-      "tool": "cloudaeye",
-      "source": "cloudaeye reviewer (oracle, no findings for this PR)"
+      "tool": "cloudaeye"
     },
     "codex": {
       "skipped": false,
@@ -570,21 +569,24 @@
         {
           "golden_comment": "`DiskBackedBackpressureQueue::unique_id` is incremented without synchronization in the constructor. Creating queues on multiple threads races on this shared counter and can assign duplicate or corrupted IDs.",
           "severity": "High",
-          "matched_candidate": "RaceCondition: unsynchronized unique_id increment. backing file IDs collide when multiple connections initialize concurrently\nThe PR introduces a process-wide static counter `size_t Connection::DiskBackedBackpressureQueue::unique_id = 0;` and increments it with plain `++unique_id` in the constructor at src/facade/dragonfly_connection.cc:2347,2353. This is unsynchronized shared mutable state, not atomic and not under a lock. The queue object is created from `Connection` setup when disk backpressure is enabled (src/facade/dragonfly_connection.cc:694-697), and multiple connections can be constructed concurrently in server code, so the added increment is a concrete data race under the C++ memory model and can duplicate IDs",
-          "confidence": 0.98,
-          "reasoning": "The candidate issue identifies the exact same problem as the golden comment: the `unique_id` static counter in `DiskBackedBackpressureQueue` is incremented without synchronization (not atomic, no lock), and when multiple connections/queues are created concurrently on different threads, this causes a data race that can result in duplicate or corrupted IDs. Both comments point to the same unsynchronized increment of the shared counter in the constructor."
+          "matched_candidate": "RaceCondition: unsynchronized unique_id increment - static unique_id counter in DiskBackedBackpressureQueue is incremented with plain ++unique_id without synchronization (not atomic, no lock), causing data race and potential ID collisions when multiple connections initialize concurrently",
+          "confidence": 0.99,
+          "reasoning": "The candidate issue identifies exactly the same problem as the golden comment: the static unique_id counter in DiskBackedBackpressureQueue is incremented without synchronization (using plain ++unique_id), which causes a data race when multiple threads/connections create queues concurrently, leading to duplicate or corrupted IDs. Both comments point to the same unsynchronized increment of the shared counter and the same consequences."
         },
         {
           "golden_comment": "Backpressure reload reconstructs arguments by splitting the serialized command on `\\0` in `LoadBackpressureFromDiskIfNeeded`. This loses correctness for binary-safe arguments that may contain embedded NUL bytes.",
           "severity": "High",
-          "matched_candidate": "DataLoss: NUL-splitting corrupts binary arguments. command reconstruction breaks when an argument contains embedded NUL bytes\nNew code reconstructs a previously serialized command by treating the loaded bytes as a NUL-delimited string view and splitting with `absl::StrSplit(read, '\\0', absl::SkipEmpty())` at src/facade/dragonfly_connection.cc:2337-2338. But offload writes `msg->FullCommand()` verbatim to disk at src/facade/dragonfly_connection.cc:2400-2407, and `FullCommand()` is binary-safe raw storage (`storage.data(), storage.size()`) per src/facade/dragonfly_connection.h:97-99. Embedded `\\0` bytes in command arguments will therefore be interpreted as separators during reload, corrupting argument boundaries and dropping empty segments. This defect is introduced by the new reload logic",
+          "matched_candidate": "DataLoss: NUL-splitting corrupts binary arguments - Connection::LoadBackpressureFromDiskIfNeeded reconstructs commands by splitting on NUL bytes using absl::StrSplit, but FullCommand() stores binary-safe raw data that may contain embedded NUL bytes, causing argument boundaries to be corrupted and empty segments to be dropped",
           "confidence": 0.98,
-          "reasoning": "The candidate issue identifies exactly the same problem as the golden comment: the backpressure reload mechanism uses NUL-splitting (absl::StrSplit on '\\0') to reconstruct command arguments from serialized data, but this breaks for binary-safe arguments that may contain embedded NUL bytes. Both comments point to the same bug in LoadBackpressureFromDiskIfNeeded where splitting on NUL corrupts argument boundaries for binary data."
+          "reasoning": "The candidate issue identifies the exact same problem as the golden comment: when LoadBackpressureFromDiskIfNeeded reconstructs commands by splitting on NUL bytes, it corrupts binary-safe arguments that may contain embedded NUL bytes. Both comments point to the same bug - the NUL-splitting approach loses correctness for binary data with embedded NUL characters."
         }
       ],
       "false_positives": [
         {
-          "candidate": "ErrorHandling: offload write failure still drops command. request is lost when disk write fails because caller still returns early\n`OffloadBackpressureToDiskIfNeeded` unconditionally treats `backing_queue_->OffloadToBacking(pmsg)` as success: it recycles the message and returns true at src/facade/dragonfly_connection.cc:2303-2317. But `DiskBackedBackpressureQueue::OffloadToBacking` returns `void` and on write failure only logs then returns early at src/facade/dragonfly_connection.cc:2406-2411, without signaling failure. This new PR code therefore drops the command on disk write error"
+          "candidate": "ErrorHandling: offload write failure still drops command - OffloadBackpressureToDiskIfNeeded unconditionally treats OffloadToBacking as success and recycles the message, but OffloadToBacking returns void and only logs on write failure without signaling it, causing commands to be lost on disk write errors"
+        },
+        {
+          "candidate": "Contract breach in binary-unsafe FullCommand - disk-backpressure serialization via FullCommand() and deserialization via absl::StrSplit on NUL loses embedded-NUL binary-safe argument contents/boundaries, breaking the binary-safe contract"
         }
       ],
       "false_negatives": [],
@@ -592,7 +594,7 @@
       "total_candidates": 4,
       "total_golden": 2,
       "tp": 2,
-      "fp": 1,
+      "fp": 2,
       "fn": 0,
       "errors_count": 0,
       "precision": 0.5,
@@ -814,8 +816,7 @@
       "errors_count": 0,
       "precision": 0.0,
       "recall": 0.0,
-      "tool": "cloudaeye",
-      "source": "cloudaeye reviewer (oracle, no findings for this PR)"
+      "tool": "cloudaeye"
     },
     "codex": {
       "skipped": false,
@@ -918,7 +919,7 @@
       ],
       "false_positives": [
         {
-          "candidate": "Cycle detection guard only detects immediate 2-cycle (waypoint \u2192 successor \u2192 waypoint) but longer cycles (A \u2192 B \u2192 C \u2192 A) would still recurse without bound - a visited/depth-bounded approach would be more robust"
+          "candidate": "Cycle detection guard only detects immediate 2-cycle (waypoint → successor → waypoint) but longer cycles (A → B → C → A) would still recurse without bound - a visited/depth-bounded approach would be more robust"
         },
         {
           "candidate": "Same 2-cycle-only limitation applies to the GetPrevious variant"
@@ -1014,7 +1015,7 @@
           "candidate": "Zero-initialized director vector produces degenerate mesh when all lanes are collapsed - if every lane has edges.first == edges.second, director stays {0,0,0} and returns two coincident vertices producing zero-area triangles with no guard in callers"
         },
         {
-          "candidate": "Loop guard only breaks direct 2-hop cycles (A \u2192 B \u2192 A) but does not detect longer cycles like A \u2192 B \u2192 C \u2192 A, which still cause stack overflow"
+          "candidate": "Loop guard only breaks direct 2-hop cycles (A → B → A) but does not detect longer cycles like A → B → C → A, which still cause stack overflow"
         }
       ],
       "false_negatives": [
@@ -1073,24 +1074,24 @@
         {
           "golden_comment": "In Map.cpp, the new `continue` on degenerate `edges` skips the `s_current += distancebetweentrees` step at the end of the loop. If `edges.first == edges.second` persists, the loop no longer makes progress and can hang.",
           "severity": "High",
-          "matched_candidate": "InfiniteLoop: continue skips s_current advance. loop never terminates when corner positions collapse at a sampled s_current\nThe new `if (edges.first == edges.second) continue;` is inside a `while (s_current < s_end)` loop (Map.cpp:1294-1305). Evidence confirms this `continue` bypasses the loop's only visible progress step at the end of the body, so when collapsed edges occur the loop can repeat forever with unchanged `s_current`. This is a structural control-flow bug on the added line itself, not pre-existing",
-          "confidence": 0.99,
-          "reasoning": "The candidate issue identifies exactly the same problem as the golden comment: the new `continue` statement when `edges.first == edges.second` skips the `s_current` advancement step at the end of the loop, causing an infinite loop when degenerate edges persist. Both comments point to the same structural control-flow bug in Map.cpp where the loop can hang due to no progress being made."
+          "matched_candidate": "InfiniteLoop in Map::GetTreesTransform: continue skips s_current advance - loop never terminates when corner positions collapse at a sampled s_current because the continue bypasses the loop's only progress step",
+          "confidence": 0.98,
+          "reasoning": "The candidate issue identifies the exact same problem as the golden comment: the 'continue' statement skips the 's_current' advancement step at the end of the loop, which causes an infinite loop when the degenerate edges condition persists. Both comments point to the same bug in Map::GetTreesTransform where the loop fails to make progress."
         },
         {
           "golden_comment": "In MeshFactory.cpp, the refactor changes lane-mark edge computation to always use the extra lane width, which alters the previous solid/final-segment behavior that used zero extra width. This shifts lane marking positions on roads with non-zero extra lane width.",
           "severity": "Medium",
-          "matched_candidate": "logic_error wrong width basis for solid center marks. solid center line geometry shifts when extra_lane_width is nonzero\nThe PR replaced a direct solid-mark computation based on `lane.GetCornerPositions(s_current, 0)` with `ComputeEdgesForLanemark(...)` at `MeshFactory.cpp:763-764`. The new helper always uses `lane.GetCornerPositions(s_current, road_param.extra_lane_width)` (`MeshFactory.cpp:1139-1140`). That changes the geometric basis from zero extra width to extra-lane-width for this mark path, matching the reported regression and making it newly introduced on the `+` lines",
-          "confidence": 0.98,
-          "reasoning": "The candidate issue identifies the exact same problem as the golden comment. Both describe how the refactor in MeshFactory.cpp changed the lane-mark edge computation to always use extra_lane_width instead of zero, which shifts lane marking positions when extra_lane_width is non-zero. The candidate specifically mentions the same code locations (MeshFactory.cpp:763-764 and 1139-1140) and correctly identifies that ComputeEdgesForLanemark now uses extra_lane_width where the previous solid-mark computation used zero."
+          "matched_candidate": "Wrong width basis for solid center marks in GenerateLaneMarksForNotCenterLine: solid center line geometry shifts when extra_lane_width is nonzero because the new helper uses extra_lane_width instead of zero for the geometric basis",
+          "confidence": 0.92,
+          "reasoning": "The candidate issue identifies the same underlying problem as the golden comment. Both describe how the refactor changed lane-mark edge computation to use extra_lane_width instead of zero, which shifts lane marking positions when extra_lane_width is nonzero. The candidate specifically mentions 'solid center marks' and 'GenerateLaneMarksForNotCenterLine' while the golden comment refers to 'solid/final-segment behavior', but they're pointing to the same behavioral change in the MeshFactory code."
         }
       ],
       "false_positives": [
         {
-          "candidate": "LogicError: predecessor back-edge check drops valid path. previous waypoints disappear when a predecessor has any forward-edge to the current lane\nNew code in Map.cpp:653-663 suppresses recursion whenever any predecessor of `successor` equals the current `waypoint`. That means a normal two-node back-edge (`waypoint -> successor`, and `successor` has `waypoint` as predecessor) is treated as broken and the path is dropped instead of explored. There is no alternate path preservation in this branch; the old unconditional `ConcatVectors(... GetPrevious(...))` was replaced by a skip. This is a concrete behavioral regression introduced by the `+` lines"
+          "candidate": "LogicError in GetPrevious: predecessor back-edge check drops valid path - previous waypoints disappear when a predecessor has any forward-edge to the current lane, causing normal two-node back-edges to be treated as broken and paths dropped instead of explored"
         },
         {
-          "candidate": "Potential: logic_error uninitialized director fallback. lanemark vertices become garbage when all lane corner pairs collapse at s_current\nThe new helper declares `geom::Vector3D director;` at MeshFactory.cpp:1142, assigns it only if `edges.first != edges.second` or if some lane in `lane_section.GetLanes()` has non-degenerate corners (1143-1156), then unconditionally uses it in `endmarking = edges.first + director * ...` at 1158. If all corner pairs collapse at `s_current`, `director` is read uninitialized. This fault is entirely introduced by the new helper and is directly used by the new call sites in this PR"
+          "candidate": "Uninitialized director fallback in MeshFactory::ComputeEdgesForLanemark: lanemark vertices become garbage when all lane corner pairs collapse at s_current because director is declared but only conditionally assigned, then unconditionally used"
         }
       ],
       "false_negatives": [],
@@ -1372,8 +1373,7 @@
       "errors_count": 0,
       "precision": 0.0,
       "recall": 0.0,
-      "tool": "cloudaeye",
-      "source": "cloudaeye reviewer (oracle, no findings for this PR)"
+      "tool": "cloudaeye"
     },
     "codex": {
       "skipped": false,
@@ -1640,14 +1640,14 @@
         {
           "golden_comment": "After `CloseHandle(handle)` at the bottom of the loop body in `fs__create_file`, `handle` is not set to `INVALID_HANDLE_VALUE`; if the loop runs all 32 iterations without resolving the path, the function falls through to `clean_and_ret_handle` and returns a closed (invalid) handle to the caller.",
           "severity": "High",
-          "matched_candidate": "HandleError: closed handle returned after retry loop. later handle use breaks when all 32 reparse resolutions fail\nNew helper code closes `handle` at src/win/fs.c:450, updates `path`, then after exhausting the 32-iteration loop falls through to `SetLastError(ERROR_CANT_RESOLVE_FILENAME)` and returns `handle` at 461 without resetting it to `INVALID_HANDLE_VALUE`. That returns a closed handle from newly added code. The returned handle now feeds new callers at src/win/fs.c:2204 (`fs__stat_directory`) and src/win/fs.c:2325 (`fs__stat_impl_from_path`)",
-          "confidence": 0.98,
-          "reasoning": "The candidate issue identifies the exact same bug as the golden comment: after CloseHandle(handle) in the loop, handle is not reset to INVALID_HANDLE_VALUE, so when all 32 iterations are exhausted, the function returns a closed/invalid handle to the caller. The candidate even provides additional context about where this affects callers (fs__stat_directory and fs__stat_impl_from_path), but the core issue is identical."
+          "matched_candidate": "In fs__create_file, after exhausting the 32-iteration reparse resolution loop, the code returns a closed handle instead of INVALID_HANDLE_VALUE because handle is closed at line 450 but not reset before returning at line 461",
+          "confidence": 0.99,
+          "reasoning": "The candidate issue identifies the exact same bug as the golden comment: in fs__create_file, when the 32-iteration reparse resolution loop is exhausted, the handle is closed (CloseHandle) but not reset to INVALID_HANDLE_VALUE, causing the function to return a closed/invalid handle to the caller. Both comments point to the same underlying issue with the same root cause and consequence."
         }
       ],
       "false_positives": [
         {
-          "candidate": "Misleading test name after behavior change. failure attribution breaks when the renamed test still executes lstat and stat together\nThe PR renames the test from `fs_lstat_windows_store_apps` to `fs_stat_windows_store_apps` at test/test-fs.c:2696, but the body still asserts both `uv_fs_lstat(...)` and `uv_fs_stat(...)` on each link entry at test/test-fs.c:2741-2742. That creates a direct name/behavior contradiction in new diff lines: the test name says stat-only while the test still covers lstat too. The registration changes in test/test-list.h consistently follow the new name, so this is not a wiring mismatch but a genuine misleading-name issue introduced by the PR"
+          "candidate": "Test renamed from fs_lstat_windows_store_apps to fs_stat_windows_store_apps but the test body still asserts both uv_fs_lstat() and uv_fs_stat(), creating a misleading name/behavior contradiction"
         }
       ],
       "false_negatives": [],
@@ -1871,7 +1871,7 @@
       ],
       "false_positives": [
         {
-          "candidate": "Title minimum width is refreshed only on the window size_changed signal. When a list row becomes narrower without the window resizing\u2014such as when the project list shows a vertical scrollbar\u2014the stored half-width minimum can stay too large and wrapping/layout stay wrong until the window is resized."
+          "candidate": "Title minimum width is refreshed only on the window size_changed signal. When a list row becomes narrower without the window resizing—such as when the project list shows a vertical scrollbar—the stored half-width minimum can stay too large and wrapping/layout stay wrong until the window is resized."
         }
       ],
       "false_negatives": [],
@@ -1892,9 +1892,9 @@
         {
           "golden_comment": "In `editor/project_manager/project_list.cpp` under `NOTIFICATION_READY`, the callable for `update_title_size` is bound with an extra argument even though `update_title_size()` takes no parameters. This makes the deferred call and `size_changed` signal invocation fail with an argument-count error.",
           "severity": "Medium",
-          "matched_candidate": "TypeError: callback arity mismatch. signal invocation fails when size_changed emits no arguments\nThe PR adds `callable_mp(this, &ProjectListItemControl::update_title_size).bind(false)` at `editor/project_manager/project_list.cpp:179`, but the newly added target method is declared and defined with zero parameters at `editor/project_manager/project_list.h:114` and `editor/project_manager/project_list.cpp:430-432`. Binding `false` adds one argument to a zero-argument method, creating a callable arity mismatch in new code. This callable is immediately exercised by PR-added paths via both `get_window()->connect(..., callback)` and `callback.call_deferred()` at `editor/project_manager/project_list.cpp:180-181`, so the defect is not pre-existing or confined to unchanged code",
+          "matched_candidate": "TypeError due to callable arity mismatch: callable_mp binds `false` (one argument) to update_title_size method which is declared with zero parameters, causing signal invocation failure when size_changed emits",
           "confidence": 0.98,
-          "reasoning": "The candidate issue identifies the exact same problem as the golden comment: the callable for `update_title_size` is bound with an extra argument (`.bind(false)`) even though the method takes no parameters, causing an argument-count/arity mismatch error. Both comments point to the same location (project_list.cpp around line 179-181), the same method (`update_title_size`), and the same root cause (binding an argument to a zero-parameter method). The candidate provides even more detail about the specific lines and how the error manifests."
+          "reasoning": "The candidate issue identifies the exact same problem as the golden comment: the callable_mp binds an extra argument (false) to update_title_size method, but update_title_size() takes no parameters, causing a signal invocation failure due to argument count mismatch. Both comments point to the same bug in the same location with the same root cause."
         }
       ],
       "false_positives": [],
@@ -2065,10 +2065,10 @@
           "candidate": "The zombie-handle detection only runs when `GetFinalPathNameByHandleW()` returns a length `< MAX_PATH`. If the final path is longer (common with `\\\\?\\` paths, and potentially for `$Extend\\$Deleted`), this check is skipped and the watcher can still get stuck re-queuing. Consider handling the `path_len >= ARRAY_SIZE(stack_buf)` case by allocating a larger buffer and retrying, so the fix works regardless of path length."
         },
         {
-          "candidate": "This adds a `GetFinalPathNameByHandleW()` call on every fs-event completion, including the common steady-state where events are being delivered normally. That WinAPI call can be relatively expensive on very \u201cchatty\u201d watchers; consider gating the zombie-path probe to the specific conditions that indicate the loop is stuck (e.g., successful completion with `InternalHigh == 0`, or a narrow set of error codes) so the steady-state path stays cheap."
+          "candidate": "This adds a `GetFinalPathNameByHandleW()` call on every fs-event completion, including the common steady-state where events are being delivered normally. That WinAPI call can be relatively expensive on very “chatty” watchers; consider gating the zombie-path probe to the specific conditions that indicate the loop is stuck (e.g., successful completion with `InternalHigh == 0`, or a narrow set of error codes) so the steady-state path stays cheap."
         },
         {
-          "candidate": "## Pull request overview\n\nFixes a Windows-specific `uv_fs_event` edge case where permanently deleting a watched directory can cause the watcher to spin/re-queue indefinitely, by detecting the \u201czombie\u201d directory handle state and reporting deletion as `UV_ENOENT`. Adds a Windows-only regression test and wires it into the test runner list.\n\n**Changes:**\n- Detect `$Extend\\$Deleted` \u201czombie\u201d directory handles on Windows and report `UV_ENOENT` without re-queuing.\n- Add a Windows-only test that asserts `UV_ENOENT` is delivered (and fails fast on timeouts).\n- Register the new Windows-only test in the test list.\n\n### Reviewed changes\n\nCopilot reviewed 3 out of 3 changed files in this pull request and generated 2 comments.\n\n| File | Description |\n| ---- | ----------- |\n| test/test-list.h | Registers the new Windows-only fs-event deletion test. |\n| test/test-fs-event.c | Adds a Windows-specific regression test with a timeout guard. |\n| src/win/fs-event.c | Adds zombie-handle detection to avoid re-queue loops and surface `UV_ENOENT`. |\n\n\n\n\n\n\n---\n\n\ud83d\udca1 <a href=\"/headerslow/libuv-pr5013-1d8c/new/v1.x?filename=.github/instructions/*.instructions.md\" class=\"Link--inTextBlock\" target=\"_blank\" rel=\"noopener noreferrer\">Add Copilot custom instructions</a> for smarter, more guided reviews. <a href=\"https://docs.github.com/en/copilot/customizing-copilot/adding-repository-custom-instructions-for-github-copilot\" class=\"Link--inTextBlock\" target=\"_blank\" rel=\"noopener noreferrer\">Learn how to get started</a>."
+          "candidate": "## Pull request overview\n\nFixes a Windows-specific `uv_fs_event` edge case where permanently deleting a watched directory can cause the watcher to spin/re-queue indefinitely, by detecting the “zombie” directory handle state and reporting deletion as `UV_ENOENT`. Adds a Windows-only regression test and wires it into the test runner list.\n\n**Changes:**\n- Detect `$Extend\\$Deleted` “zombie” directory handles on Windows and report `UV_ENOENT` without re-queuing.\n- Add a Windows-only test that asserts `UV_ENOENT` is delivered (and fails fast on timeouts).\n- Register the new Windows-only test in the test list.\n\n### Reviewed changes\n\nCopilot reviewed 3 out of 3 changed files in this pull request and generated 2 comments.\n\n| File | Description |\n| ---- | ----------- |\n| test/test-list.h | Registers the new Windows-only fs-event deletion test. |\n| test/test-fs-event.c | Adds a Windows-specific regression test with a timeout guard. |\n| src/win/fs-event.c | Adds zombie-handle detection to avoid re-queue loops and surface `UV_ENOENT`. |\n\n\n\n\n\n\n---\n\n💡 <a href=\"/headerslow/libuv-pr5013-1d8c/new/v1.x?filename=.github/instructions/*.instructions.md\" class=\"Link--inTextBlock\" target=\"_blank\" rel=\"noopener noreferrer\">Add Copilot custom instructions</a> for smarter, more guided reviews. <a href=\"https://docs.github.com/en/copilot/customizing-copilot/adding-repository-custom-instructions-for-github-copilot\" class=\"Link--inTextBlock\" target=\"_blank\" rel=\"noopener noreferrer\">Learn how to get started</a>."
         }
       ],
       "false_negatives": [
@@ -2159,8 +2159,7 @@
       "errors_count": 0,
       "precision": 0.0,
       "recall": 0.0,
-      "tool": "cloudaeye",
-      "source": "cloudaeye reviewer (oracle, no findings for this PR)"
+      "tool": "cloudaeye"
     },
     "codex": {
       "skipped": false,
@@ -2382,9 +2381,9 @@
         {
           "golden_comment": "In mpy-cross/main.c, parsing for source-lines and no-source-lines is inside the MICROPY_EMIT_NATIVE conditional, so these options are ignored when native emit support is disabled.",
           "severity": "Medium",
-          "matched_candidate": "LogicError: source-lines options ignored without native emit. CLI option parsing breaks when MICROPY_EMIT_NATIVE is disabled\nThe new `source-lines`/`no-source-lines` parsing was added inside the existing `#if MICROPY_EMIT_NATIVE` branch at mpy-cross/main.c:199-205, so those options are only recognized when native emit support is compiled in. But `usage()` advertises them whenever `MICROPY_ENABLE_SOURCE_LINE` is set at mpy-cross/main.c:170-175, independent of `MICROPY_EMIT_NATIVE`. This is a concrete new logic regression in the added lines: builds with `MICROPY_ENABLE_SOURCE_LINE && !MICROPY_EMIT_NATIVE` will document options that the parser does not accept",
+          "matched_candidate": "CLI option parsing for source-lines/no-source-lines is inside #if MICROPY_EMIT_NATIVE branch, so these options are only recognized when native emit support is compiled in, but usage() advertises them based on MICROPY_ENABLE_SOURCE_LINE independent of MICROPY_EMIT_NATIVE, causing builds with MICROPY_ENABLE_SOURCE_LINE && !MICROPY_EMIT_NATIVE to document options that the parser does not accept",
           "confidence": 0.98,
-          "reasoning": "The candidate issue identifies the exact same problem as the golden comment: the source-lines/no-source-lines parsing is inside the MICROPY_EMIT_NATIVE conditional, so these options are ignored when native emit support is disabled. The candidate provides additional context about the usage() function advertising these options independently, but the core issue is identical - the parsing for these options is incorrectly placed inside the #if MICROPY_EMIT_NATIVE block."
+          "reasoning": "The candidate issue identifies the exact same problem as the golden comment: the CLI option parsing for source-lines/no-source-lines is inside the #if MICROPY_EMIT_NATIVE conditional block, meaning these options are ignored/not recognized when native emit support is disabled. The candidate provides additional context about the mismatch with usage() documentation, but the core issue identified is identical."
         }
       ],
       "false_positives": [],
@@ -2491,7 +2490,7 @@
           "candidate": "Unmasked codepoint in hex fallback - codepoint is unsigned int written without masking, but length loop only reserves 6 bytes per unnamed entry; if codepoint exceeds 0xffff, ngx_sprintf writes more than 6 bytes and overruns the buffer. Should mask with & 0xffff"
         },
         {
-          "candidate": "Unrelated version bump (1.31.1 \u2192 1.31.2) in src/core/nginx.h should not be part of this PR - release version increments are handled by maintainers as a separate release step"
+          "candidate": "Unrelated version bump (1.31.1 → 1.31.2) in src/core/nginx.h should not be part of this PR - release version increments are handled by maintainers as a separate release step"
         }
       ],
       "false_negatives": [],
@@ -2517,7 +2516,7 @@
           "candidate": "In the OpenSSL>=4.0 branch, name and codepoint are declared once and populated by SSL_get0_sigalg() inside loops, but the return value is ignored and name is immediately dereferenced via ngx_strlen(name)"
         },
         {
-          "candidate": "In the OpenSSL 1.0.2\u20133.x branch, rsig and rhash are written by SSL_get_sigalgs() but the return value is ignored before using them to format the output"
+          "candidate": "In the OpenSSL 1.0.2–3.x branch, rsig and rhash are written by SSL_get_sigalgs() but the return value is ignored before using them to format the output"
         }
       ],
       "false_negatives": [
@@ -2636,15 +2635,14 @@
       "errors_count": 0,
       "precision": 0.0,
       "recall": 0.0,
-      "tool": "cloudaeye",
-      "source": "cloudaeye reviewer (oracle, no findings for this PR)"
+      "tool": "cloudaeye"
     },
     "codex": {
       "skipped": false,
       "true_positives": [],
       "false_positives": [
         {
-          "candidate": "SSL_get_sigalgs() is called with negative idx instead of idx == 0, causing it to return empty $ssl_sigalgs on OpenSSL 1.0.2\u20133.x because negative idx is treated as out of range"
+          "candidate": "SSL_get_sigalgs() is called with negative idx instead of idx == 0, causing it to return empty $ssl_sigalgs on OpenSSL 1.0.2–3.x because negative idx is treated as out of range"
         },
         {
           "candidate": "The new variable only works on OpenSSL 4.0+ while deployments using common OpenSSL 3.x/1.1.1 libraries never reach the loop even when the client advertised signature algorithms"
@@ -2874,7 +2872,7 @@
       "true_positives": [],
       "false_positives": [
         {
-          "candidate": "LogicError: deferred flag left on sync errors. pipeline reply handling can stall when async mode marks deferred before argument validation returns immediate error\nNew PR code sets deferred-reply state before command-specific validation (`SetDeferredReply()` at src/facade/ok_main.cc:219-220), then immediately emits arity errors for SET/GET (`SendError(...)` at 223-225 and similarly 234-236). `ParsedCommand`'s async contract documents deferred commands should complete via `Resolve` / `CanReply` / `SendReply` after suspension (`src/facade/parsed_command.h:160-167`), while `SetDeferredReply()` itself only flips a flag (`src/facade/parsed_command.h:119-121`). This makes the ordering regression concrete in new code. Confidence is Medium because the final hop into `parsed_command.cc` bookkeeping for `SendError` vs deferred state was not fully opened in the evidence log"
+          "candidate": "Pipeline reply handling can stall when async mode marks deferred before argument validation returns immediate error - SetDeferredReply() is called before command-specific validation, then immediate arity errors are emitted for SET/GET, but deferred commands should complete via Resolve/CanReply/SendReply after suspension according to ParsedCommand's async contract"
         }
       ],
       "false_negatives": [
@@ -3141,7 +3139,7 @@
       ],
       "false_positives": [
         {
-          "candidate": "_colorFromKey only unboxes a Color from ThemeLookup, but default inactive and broadcast pane keys resolve to SolidColorBrush resources (e.g. UnfocusedBorderBrush \u2192 TabViewBackground). Unboxing fails and falls back to black, so default inactive borders regress from the prior brush-based behavior"
+          "candidate": "_colorFromKey only unboxes a Color from ThemeLookup, but default inactive and broadcast pane keys resolve to SolidColorBrush resources (e.g. UnfocusedBorderBrush → TabViewBackground). Unboxing fails and falls back to black, so default inactive borders regress from the prior brush-based behavior"
         },
         {
           "candidate": "For ThemeColorType::Accent, _parseThemeColorToColor resolves colorKey from the caller. Inactive and broadcast pane colors pass UnfocusedBorderBrush or BroadcastPaneBorderColor instead of SystemAccentColor, so JSON 'accent' on those properties does not match tab/window accent handling via ThemeColor::Evaluate"
@@ -3168,9 +3166,9 @@
         {
           "golden_comment": "In `TerminalPage::_updatePaneResources`, the result of `_colorFromKey(res, requestedTheme, broadcastColorKey)` is discarded in the `broadcastColorKey` branch, so the broadcast border color never updates from the resource lookup.",
           "severity": "Medium",
-          "matched_candidate": "LogicError: discarded broadcast color lookup result. broadcast border stays black when theme relies on BroadcastPaneBorderColor resource\nNew code at src/cascadia/TerminalApp/TerminalPage.cpp:4892-4894 calls `_colorFromKey(res, requestedTheme, broadcastColorKey)` but discards its return value. The function then always builds `_paneResources.broadcastBorderBrush` from `broadcastBrushColor` at 4901, and that local was initialized to black at 4861 and only changed when `broadcastBorderColor` is present at 4894-4896. So when the theme relies on the `BroadcastPaneBorderColor` resource and no explicit override is set, the looked-up color is dropped and the brush stays black. This is a direct structural data-flow bug introduced on `+` lines, not pre-existing",
-          "confidence": 0.99,
-          "reasoning": "The candidate issue identifies exactly the same bug as the golden comment: in `_updatePaneResources`, the result of `_colorFromKey(res, requestedTheme, broadcastColorKey)` is discarded, causing the broadcast border color to never update from the resource lookup. The candidate provides additional detail about the data flow and consequences (brush stays black), but it's pointing to the identical underlying issue."
+          "matched_candidate": "In _updatePaneResources, the return value of _colorFromKey(res, requestedTheme, broadcastColorKey) is discarded at lines 4892-4894, causing the broadcast border to stay black when the theme relies on BroadcastPaneBorderColor resource and no explicit override is set",
+          "confidence": 0.98,
+          "reasoning": "The candidate issue identifies exactly the same bug as the golden comment: in _updatePaneResources, the return value of _colorFromKey(res, requestedTheme, broadcastColorKey) is discarded, which means the broadcast border color never updates from the resource lookup. The candidate even provides specific line numbers (4892-4894) and describes the same consequence - the broadcast border color doesn't update properly when using the resource."
         }
       ],
       "false_positives": [],
@@ -3377,9 +3375,9 @@
         {
           "golden_comment": "The inner `<< 1` in the coeff6 expression at modules/features2d/src/brisk.cpp still left-shifts a signed intermediate that can be negative, so undefined behavior remains.",
           "severity": "High",
-          "matched_candidate": "UndefinedBehavior: signed shift still remains. UB remains when the summed term becomes negative\nThe `+` line at modules/features2d/src/brisk.cpp:2040 still contains a signed left shift: `((s_1_0 + s_0_1 + s_1_2 + s_2_1) << 1)`. In C/C++, left-shifting a signed value is the exact UB pattern this PR is fixing, and the same edited block explicitly documents that shift-based forms are being replaced to avoid UB (modules/features2d/src/brisk.cpp:2037-2040). This is new code in the diff, not unchanged/pre-existing text, and under the C/C++ validation rule for incomplete UB fixes, the surviving signed-shift instance is a concrete defect",
-          "confidence": 0.95,
-          "reasoning": "The golden comment identifies that the inner `<< 1` in the coeff6 expression at modules/features2d/src/brisk.cpp still left-shifts a signed intermediate that can be negative, causing undefined behavior. The candidate issue identifies the same problem - it points to the signed left shift `((s_1_0 + s_0_1 + s_1_2 + s_2_1) << 1)` at line 2040 in the same file, noting that left-shifting a signed value that can be negative is undefined behavior. Both are identifying the same underlying issue: a signed left shift that remains in the coeff6 expression causing UB."
+          "matched_candidate": "Signed left shift UB remains in BriskScaleSpace::subpixel2D at modules/features2d/src/brisk.cpp:2040 - the expression ((s_1_0 + s_0_1 + s_1_2 + s_2_1) << 1) left-shifts a signed value which can cause undefined behavior when the summed term becomes negative",
+          "confidence": 0.85,
+          "reasoning": "The golden comment mentions the inner `<< 1` in the coeff6 expression causing undefined behavior due to left-shifting a signed intermediate that can be negative. The candidate issue identifies signed left shift UB in the same file (brisk.cpp) at line 2040, specifically mentioning `((s_1_0 + s_0_1 + s_1_2 + s_2_1) << 1)` which left-shifts a signed value that can become negative. This appears to be the same underlying issue - signed left shift of potentially negative values causing undefined behavior in the same file, though the candidate points to a specific expression that may be part of or related to the coeff6 calculation."
         }
       ],
       "false_positives": [],
@@ -3445,7 +3443,7 @@
         {
           "golden_comment": "`return true` is placed on line 506 of BeginDocumentHandler immediately after `SetContentType(\"application/xhtml+xml\")`, making all subsequent AppendString calls unreachable dead code and producing an empty document body.",
           "severity": "High",
-          "matched_candidate": "Early `return true;` on line 504 causes the function to exit immediately, making the entire block of code below it (lines 505\u2013527) that appends the XHTML headers, metadata, and opening tags unreachable dead code, completely breaking hOCR output generation",
+          "matched_candidate": "Early `return true;` on line 504 causes the function to exit immediately, making the entire block of code below it (lines 505–527) that appends the XHTML headers, metadata, and opening tags unreachable dead code, completely breaking hOCR output generation",
           "confidence": 0.95,
           "reasoning": "Both comments identify the same fundamental issue: an early `return true` statement that causes all subsequent code (AppendString calls for XHTML content) to become unreachable dead code, resulting in empty/broken document output. The golden comment says line 506, the candidate says line 504, but they're describing the same bug - the premature return that makes the document body generation code unreachable."
         }
@@ -3618,9 +3616,9 @@
         {
           "golden_comment": "`return true` is placed on line 506 of BeginDocumentHandler immediately after `SetContentType(\"application/xhtml+xml\")`, making all subsequent AppendString calls unreachable dead code and producing an empty document body.",
           "severity": "High",
-          "matched_candidate": "LogicError: unreachable hOCR header generation. Document output is empty when BeginDocumentHandler returns before appending the XHTML header\nNew lines `src/api/hocrrenderer.cpp:503-504` add `return true;` immediately after `SetContentType(...)`. The subsequent XHTML prologue/header `AppendString(...)` block at `src/api/hocrrenderer.cpp:506-526` becomes unreachable, so the handler now exits before writing the hOCR document header. This is introduced by the PR, not pre-existing",
+          "matched_candidate": "BeginDocumentHandler returns true immediately after SetContentType(), making the subsequent XHTML prologue/header AppendString block unreachable, resulting in empty document output without the hOCR document header",
           "confidence": 0.98,
-          "reasoning": "The candidate issue identifies the exact same problem as the golden comment: a premature 'return true' statement after SetContentType() that makes subsequent AppendString calls unreachable dead code, resulting in an empty document body. The candidate correctly identifies this is in BeginDocumentHandler in hocrrenderer.cpp, mentions the same consequence (empty document/no XHTML header written), and notes this is introduced by the PR. The line numbers differ slightly (503-504 vs 506) but this is likely due to different counting methods or context - the core issue is identical."
+          "reasoning": "The candidate issue identifies the exact same problem as the golden comment: the early 'return true' statement in BeginDocumentHandler occurs immediately after SetContentType(), making all subsequent AppendString calls unreachable dead code, which results in an empty document body/output without the hOCR header. Both comments point to the same bug - premature return causing dead code and empty document output."
         }
       ],
       "false_positives": [],
@@ -3890,16 +3888,16 @@
         {
           "golden_comment": "The first parameter of php_uri_parser_rfc3986_uri_type_read in uri_parser_rfc3986.c is declared as void* instead of the concrete type php_uri_parser_rfc3986_uris*, inconsistent with all other functions in this file.",
           "severity": "Medium",
-          "matched_candidate": "Potential: Type-safety regression from void* parameter. mismatched pointer types compile silently when callers pass non-rfc3986 URI storage\nNew PR-added API erases the concrete URI storage type by declaring `void *uri` at ext/uri/uri_parser_rfc3986.h:24, and the matching implementation in ext/uri/uri_parser_rfc3986.c:114-116 immediately passes that pointer into `get_uri_for_reading(...)` as RFC3986 parser storage, showing the function expects a narrower type than its public signature exposes. The new caller in ext/uri/php_uri.c:519 passes `uri_object->uri`, so current in-diff usage is correct, but the added header declaration loses compile-time type checking for future/other callers. This is new code, not a decl/def mismatch, and fits the C-specific `code_signature` rule for weakened `void*` typing",
+          "matched_candidate": "php_uri_parser_rfc3986_uri_type_read function declares void* parameter which erases compile-time type checking, allowing callers to pass non-rfc3986 URI storage without compiler warnings, even though the implementation expects RFC3986 parser storage specifically",
           "confidence": 0.95,
-          "reasoning": "Both comments identify the same issue: the first parameter of php_uri_parser_rfc3986_uri_type_read is declared as void* instead of the concrete type php_uri_parser_rfc3986_uris*. The golden comment notes this is inconsistent with other functions in the file, while the candidate issue provides more detail about the type-safety implications and traces through the code to show why this is problematic. Both are pointing to the same underlying problem - the use of void* instead of the concrete type for this function's parameter."
+          "reasoning": "The candidate issue identifies the same problem as the golden comment - that the php_uri_parser_rfc3986_uri_type_read function uses void* as its first parameter instead of the concrete type. The golden comment notes this is inconsistent with other functions in the file, while the candidate focuses on the type safety implications (erasing compile-time type checking). Both are pointing to the same underlying issue: the void* parameter type instead of the specific php_uri_parser_rfc3986_uris* type."
         },
         {
           "golden_comment": "The declaration of php_uri_parser_rfc3986_uri_type_read in uri_parser_rfc3986.h declares the first parameter as void* instead of the concrete type php_uri_parser_rfc3986_uris*, unlike all other declarations in this header.",
           "severity": "Medium",
-          "matched_candidate": "Potential: Type-safety regression from void* parameter. mismatched pointer types compile silently when callers pass non-rfc3986 URI storage\nNew PR-added API erases the concrete URI storage type by declaring `void *uri` at ext/uri/uri_parser_rfc3986.h:24, and the matching implementation in ext/uri/uri_parser_rfc3986.c:114-116 immediately passes that pointer into `get_uri_for_reading(...)` as RFC3986 parser storage, showing the function expects a narrower type than its public signature exposes. The new caller in ext/uri/php_uri.c:519 passes `uri_object->uri`, so current in-diff usage is correct, but the added header declaration loses compile-time type checking for future/other callers. This is new code, not a decl/def mismatch, and fits the C-specific `code_signature` rule for weakened `void*` typing",
+          "matched_candidate": "php_uri_parser_rfc3986_uri_type_read function declares void* parameter which erases compile-time type checking, allowing callers to pass non-rfc3986 URI storage without compiler warnings, even though the implementation expects RFC3986 parser storage specifically",
           "confidence": 0.95,
-          "reasoning": "Both comments identify the same issue: the php_uri_parser_rfc3986_uri_type_read function declaration in uri_parser_rfc3986.h uses void* for the first parameter instead of the concrete type php_uri_parser_rfc3986_uris*. The golden comment notes this is inconsistent with other declarations in the header, while the candidate issue explains the type-safety implications of using void* instead of the concrete type. Both are pointing to the same underlying problem - the weakened type signature in the header declaration."
+          "reasoning": "Both comments identify the same issue: the php_uri_parser_rfc3986_uri_type_read function in the header declares its first parameter as void* instead of the concrete type (php_uri_parser_rfc3986_uris*). The golden comment notes this is inconsistent with other declarations in the header, while the candidate comment focuses on the type safety implications of using void*. Both are pointing to the same underlying problem - the incorrect/inconsistent void* parameter type in this specific function declaration."
         }
       ],
       "false_positives": [],
@@ -3962,7 +3960,7 @@
           "severity": "Medium"
         },
         {
-          "golden_comment": "In `isValidAuxChar` (cluster.c), `strchr(invalid_charset, c)` passes the original signed `int c` instead of the already-declared `unsigned char ch`; high-bit byte values sign-extend to negative integers, producing undefined behavior per C11 \u00a77.4\u00b61.",
+          "golden_comment": "In `isValidAuxChar` (cluster.c), `strchr(invalid_charset, c)` passes the original signed `int c` instead of the already-declared `unsigned char ch`; high-bit byte values sign-extend to negative integers, producing undefined behavior per C11 §7.4¶1.",
           "severity": "High"
         }
       ],
@@ -3988,7 +3986,7 @@
           "reasoning": "The candidate issue identifies exactly the same problem as the golden comment: in the isValidAuxChar function, the code passes the signed 'c' parameter to isalnum() instead of the unsigned-casted 'ch' variable, which can cause undefined behavior when dealing with negative values (non-ASCII characters). Both comments point to the same bug in the same function with the same root cause and consequence."
         },
         {
-          "golden_comment": "In `isValidAuxChar` (cluster.c), `strchr(invalid_charset, c)` passes the original signed `int c` instead of the already-declared `unsigned char ch`; high-bit byte values sign-extend to negative integers, producing undefined behavior per C11 \u00a77.4\u00b61.",
+          "golden_comment": "In `isValidAuxChar` (cluster.c), `strchr(invalid_charset, c)` passes the original signed `int c` instead of the already-declared `unsigned char ch`; high-bit byte values sign-extend to negative integers, producing undefined behavior per C11 §7.4¶1.",
           "severity": "High",
           "matched_candidate": "Undefined behavior in isValidAuxChar from passing signed int 'c' to isalnum() instead of the already-casted unsigned char 'ch' - negative values from non-ASCII characters can cause undefined behavior",
           "confidence": 0.9,
@@ -4023,7 +4021,7 @@
           "reasoning": "The candidate issue identifies the same underlying problem as the golden comment: isalnum is being called with the original 'c' parameter instead of the unsigned-cast 'ch', which causes undefined behavior when char is signed and negative values are passed. The candidate also mentions strchr having the same issue, but it correctly identifies the core isalnum problem that the golden comment describes."
         },
         {
-          "golden_comment": "In `isValidAuxChar` (cluster.c), `strchr(invalid_charset, c)` passes the original signed `int c` instead of the already-declared `unsigned char ch`; high-bit byte values sign-extend to negative integers, producing undefined behavior per C11 \u00a77.4\u00b61.",
+          "golden_comment": "In `isValidAuxChar` (cluster.c), `strchr(invalid_charset, c)` passes the original signed `int c` instead of the already-declared `unsigned char ch`; high-bit byte values sign-extend to negative integers, producing undefined behavior per C11 §7.4¶1.",
           "severity": "High",
           "matched_candidate": "isalnum(c) and strchr(invalid_charset, c) are passed the original int c instead of the sanitized unsigned char ch, causing undefined behavior when char is signed and bytes >= 0x80 (like UTF-8) arrive as negative int values",
           "confidence": 0.95,
@@ -4054,7 +4052,7 @@
           "reasoning": "The candidate issue identifies the exact same problem as the golden comment: in isValidAuxChar(), the function calls isalnum(c) with the original signed char parameter instead of using the unsigned-cast variable 'ch'. Both comments point out that this causes undefined behavior when negative values (from non-ASCII bytes on signed-char platforms) are passed to isalnum. The candidate correctly identifies the same bug, same location, and same consequence."
         },
         {
-          "golden_comment": "In `isValidAuxChar` (cluster.c), `strchr(invalid_charset, c)` passes the original signed `int c` instead of the already-declared `unsigned char ch`; high-bit byte values sign-extend to negative integers, producing undefined behavior per C11 \u00a77.4\u00b61.",
+          "golden_comment": "In `isValidAuxChar` (cluster.c), `strchr(invalid_charset, c)` passes the original signed `int c` instead of the already-declared `unsigned char ch`; high-bit byte values sign-extend to negative integers, producing undefined behavior per C11 §7.4¶1.",
           "severity": "High",
           "matched_candidate": "strchr() is also called with the original c parameter instead of ch, which has the same undefined behavior issue with non-ASCII input",
           "confidence": 0.98,
@@ -4089,7 +4087,7 @@
           "reasoning": "The candidate issue identifies the exact same problem as the golden comment: in isValidAuxChar(), the isalnum() function is being called with the original signed char value instead of an unsigned-cast value, which causes undefined behavior when the character is negative (high bytes >= 0x80 on platforms with signed char). Both comments point to the same bug - the variable 'c' being passed to isalnum() instead of the unsigned-cast 'ch' (or equivalent unsigned char value)."
         },
         {
-          "golden_comment": "In `isValidAuxChar` (cluster.c), `strchr(invalid_charset, c)` passes the original signed `int c` instead of the already-declared `unsigned char ch`; high-bit byte values sign-extend to negative integers, producing undefined behavior per C11 \u00a77.4\u00b61.",
+          "golden_comment": "In `isValidAuxChar` (cluster.c), `strchr(invalid_charset, c)` passes the original signed `int c` instead of the already-declared `unsigned char ch`; high-bit byte values sign-extend to negative integers, producing undefined behavior per C11 §7.4¶1.",
           "severity": "High",
           "matched_candidate": "isValidAuxChar() calls isalnum(c) with the original int value derived from a possibly-signed char, causing undefined behavior when s[i] is negative (bytes >= 0x80 on platforms where char is signed). Should consistently operate on an unsigned char value for both isalnum() and strchr() checks.",
           "confidence": 0.9,
@@ -4122,7 +4120,7 @@
         {
           "golden_comment": "In src/cluster.c:isValidAuxChar, `isalnum` is still called with `c` instead of the unsigned-cast `ch`. Passing a negative non-EOF value to `isalnum` is undefined behavior on platforms with signed `char`.",
           "severity": "Medium",
-          "matched_candidate": "The isalnum(c) call uses the original int c parameter instead of the unsigned char ch variable. If char is signed and the input byte is in the 0x80-0xFF range, c will be negative, and passing a negative value other than EOF to isalnum() is undefined behaviour (ISO C99 \u00a77.4)",
+          "matched_candidate": "The isalnum(c) call uses the original int c parameter instead of the unsigned char ch variable. If char is signed and the input byte is in the 0x80-0xFF range, c will be negative, and passing a negative value other than EOF to isalnum() is undefined behaviour (ISO C99 §7.4)",
           "confidence": 1.0,
           "reasoning": "The candidate issue identifies exactly the same problem as the golden comment: in the isValidAuxChar function, isalnum() is being called with the original parameter 'c' instead of the unsigned char variable 'ch'. Both comments explain that this causes undefined behavior when char is signed and the input is in the high byte range (0x80-0xFF), resulting in negative values being passed to isalnum(). The candidate even provides the specific ISO C standard reference."
         }
@@ -4134,7 +4132,7 @@
       ],
       "false_negatives": [
         {
-          "golden_comment": "In `isValidAuxChar` (cluster.c), `strchr(invalid_charset, c)` passes the original signed `int c` instead of the already-declared `unsigned char ch`; high-bit byte values sign-extend to negative integers, producing undefined behavior per C11 \u00a77.4\u00b61.",
+          "golden_comment": "In `isValidAuxChar` (cluster.c), `strchr(invalid_charset, c)` passes the original signed `int c` instead of the already-declared `unsigned char ch`; high-bit byte values sign-extend to negative integers, producing undefined behavior per C11 §7.4¶1.",
           "severity": "High"
         }
       ],
@@ -4159,7 +4157,7 @@
           "severity": "Medium"
         },
         {
-          "golden_comment": "In `isValidAuxChar` (cluster.c), `strchr(invalid_charset, c)` passes the original signed `int c` instead of the already-declared `unsigned char ch`; high-bit byte values sign-extend to negative integers, producing undefined behavior per C11 \u00a77.4\u00b61.",
+          "golden_comment": "In `isValidAuxChar` (cluster.c), `strchr(invalid_charset, c)` passes the original signed `int c` instead of the already-declared `unsigned char ch`; high-bit byte values sign-extend to negative integers, producing undefined behavior per C11 §7.4¶1.",
           "severity": "High"
         }
       ],
@@ -4180,16 +4178,16 @@
         {
           "golden_comment": "In src/cluster.c:isValidAuxChar, `isalnum` is still called with `c` instead of the unsigned-cast `ch`. Passing a negative non-EOF value to `isalnum` is undefined behavior on platforms with signed `char`.",
           "severity": "Medium",
-          "matched_candidate": "UndefinedBehavior: signed char passed to isalnum. character classification is undefined when input byte is >= 0x80\nNew code at src/cluster.c:777 creates `unsigned char ch = (unsigned char)c`, but the added ctype call at src/cluster.c:783 still uses `isalnum(c)` instead of `isalnum(ch)`. Passing a possibly negative `char` to `<ctype.h>` APIs is undefined for bytes >= 0x80. This is directly visible in the diff. `isValidAuxChar` is called by `isValidAuxString` (src/cluster.c:792), which feeds config validation paths including `isValidAnnouncedNodename` and `isValidClusterAnnounceIp`",
-          "confidence": 1.0,
-          "reasoning": "The candidate issue identifies exactly the same problem as the golden comment: in the isValidAuxChar function in src/cluster.c, the code creates an unsigned char variable 'ch' but then still calls isalnum(c) with the original signed char 'c' instead of using isalnum(ch). Both comments correctly identify this as undefined behavior when passing negative char values to ctype.h functions like isalnum."
+          "matched_candidate": "In isValidAuxChar (src/cluster.c), the ctype call at line 783 uses isalnum(c) instead of isalnum(ch), passing a possibly negative signed char to <ctype.h> API which is undefined behavior for bytes >= 0x80",
+          "confidence": 0.98,
+          "reasoning": "Both comments identify the exact same issue: in the isValidAuxChar function in src/cluster.c, the isalnum() call uses the original 'c' parameter instead of the unsigned-cast 'ch' variable, which causes undefined behavior when passing negative signed char values (for bytes >= 0x80). The golden comment mentions 'negative non-EOF value' while the candidate mentions 'bytes >= 0x80', but both are describing the same underlying problem with the same root cause and same location."
         },
         {
-          "golden_comment": "In `isValidAuxChar` (cluster.c), `strchr(invalid_charset, c)` passes the original signed `int c` instead of the already-declared `unsigned char ch`; high-bit byte values sign-extend to negative integers, producing undefined behavior per C11 \u00a77.4\u00b61.",
+          "golden_comment": "In `isValidAuxChar` (cluster.c), `strchr(invalid_charset, c)` passes the original signed `int c` instead of the already-declared `unsigned char ch`; high-bit byte values sign-extend to negative integers, producing undefined behavior per C11 §7.4¶1.",
           "severity": "High",
-          "matched_candidate": "Potential: signed char misclassified by strchr. invalid-character test can misbehave when input byte is >= 0x80\nThe new byte-set check in `isValidAuxChar` uses `strchr(invalid_charset, c)` rather than the already-normalized `unsigned char ch` introduced at src/cluster.c:777. For bytes >= 0x80, using the original signed `char` can misclassify the membership test. This is a distinct new-code issue from the sibling `isalnum(c)` bug because it affects the separate `strchr` path on src/cluster.c:787-789",
-          "confidence": 0.98,
-          "reasoning": "The candidate issue identifies the exact same problem as the golden comment: in `isValidAuxChar` (cluster.c), the `strchr(invalid_charset, c)` call uses the original signed `c` parameter instead of the already-declared `unsigned char ch`, which causes issues with high-bit byte values (>= 0x80). Both comments point to the same bug in the same function, same line of code, and describe the same underlying issue of signed vs unsigned character handling in the strchr call."
+          "matched_candidate": "In isValidAuxChar (src/cluster.c), the strchr(invalid_charset, c) call uses the original signed char c instead of the normalized unsigned char ch, which can misclassify membership test for bytes >= 0x80",
+          "confidence": 0.95,
+          "reasoning": "Both comments identify the same issue: in the isValidAuxChar function in cluster.c, the strchr() call incorrectly uses the original signed 'c' parameter instead of the unsigned char 'ch' variable. Both point out this causes problems with high-bit byte values (>= 0x80). The golden comment emphasizes the undefined behavior per C11 standard, while the candidate focuses on the practical consequence of misclassifying membership tests, but they're describing the same underlying bug."
         }
       ],
       "false_positives": [],
@@ -4215,7 +4213,7 @@
           "severity": "Medium"
         },
         {
-          "golden_comment": "In `isValidAuxChar` (cluster.c), `strchr(invalid_charset, c)` passes the original signed `int c` instead of the already-declared `unsigned char ch`; high-bit byte values sign-extend to negative integers, producing undefined behavior per C11 \u00a77.4\u00b61.",
+          "golden_comment": "In `isValidAuxChar` (cluster.c), `strchr(invalid_charset, c)` passes the original signed `int c` instead of the already-declared `unsigned char ch`; high-bit byte values sign-extend to negative integers, producing undefined behavior per C11 §7.4¶1.",
           "severity": "High"
         }
       ],

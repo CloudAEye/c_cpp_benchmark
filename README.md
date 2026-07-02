@@ -118,8 +118,8 @@ each tool posted — that's the raw material behind the scores in `evaluations.j
    mean, summed across all 16 PRs.
 
 All reviewers are scored by the **same judge** so the comparison is fair. The
-benchmark ships results from **three judge models** — `anthropic_claude-sonnet-4-5-20250929`
-(default), `anthropic_claude-opus-4-5-20251101`, and `openai_gpt-5.2` — so you can
+benchmark ships results from **three judge models** — `anthropic_claude-opus-4-5-20251101`
+(default), `anthropic_claude-sonnet-4-5-20250929`, and `openai_gpt-5.2` — so you can
 confirm the ranking holds regardless of who judges.
 
 ---
@@ -140,7 +140,7 @@ table from them:
 python pipeline/compute_metrics.py
 ```
 
-This reads `results/anthropic_claude-sonnet-4-5-20250929/evaluations.json` and prints
+This reads `results/anthropic_claude-opus-4-5-20251101/evaluations.json` and prints
 the per-PR breakdown plus the ranked leaderboard. Every tool present in that file is
 scored automatically.
 
@@ -148,7 +148,7 @@ The benchmark is scored by **three independent judge models** so you can see the
 ranking doesn't depend on any single judge. Switch with `--judge`:
 
 ```bash
-python pipeline/compute_metrics.py --judge anthropic_claude-opus-4-5-20251101
+python pipeline/compute_metrics.py --judge anthropic_claude-sonnet-4-5-20250929
 python pipeline/compute_metrics.py --judge openai_gpt-5.2
 ```
 

@@ -11,7 +11,7 @@ own reviewer is just: scrape (step1) -> extract/dedup (step2/2_5) -> judge
 (step3) -> run this script. No edits here required.
 
 The judge folder is picked from MARTIAN_MODEL (same value step3 used), defaulting
-to the published judge `claude-sonnet-4-5-20250929`. Override with --judge.
+to the published judge `claude-opus-4-5-20251101`. Override with --judge.
 
 TP/FN are matched by golden text against benchmark_final16.json, so goldens that
 were dropped during dataset cleaning are ignored even if an old evaluation still
@@ -43,7 +43,7 @@ def prf(tp, fp, fn):
 
 def main():
     ap = argparse.ArgumentParser(description="Compute the C/C++ review leaderboard.")
-    default_judge = os.environ.get("MARTIAN_MODEL", "anthropic/claude-sonnet-4-5-20250929").replace("/", "_")
+    default_judge = os.environ.get("MARTIAN_MODEL", "anthropic/claude-opus-4-5-20251101").replace("/", "_")
     ap.add_argument("--judge", default=default_judge,
                     help="Judge model dir under results/ (default: %(default)s)")
     ap.add_argument("--benchmark", default="benchmark_final16.json",

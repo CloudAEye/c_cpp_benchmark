@@ -1,12 +1,12 @@
 # C/C++ Code-Review Leaderboard
 
 **Dataset:** 16 real merged PRs (7 C / 9 C++), 20 human-verified golden findings
-**Judge (default):** `anthropic_claude-sonnet-4-5-20250929` — also scored by
-`anthropic_claude-opus-4-5-20251101` and `openai_gpt-5.2`
-**Last updated:** 2026-06-25
+**Judge (default):** `anthropic_claude-opus-4-5-20251101` — also scored by
+`anthropic_claude-sonnet-4-5-20250929` and `openai_gpt-5.2`
+**Last updated:** 2026-07-02
 
 Every reviewer is scored by the same scrape-and-judge pipeline on the same forks.
-Reproduce the scores from `results/` with `python pipeline/compute_metrics.py`
+Reproduce the scores from `results/` with `python pipeline/compute_metrics.py --judge anthropic_claude-opus-4-5-20251101`
 (no API key needed to read the existing scores); add `--judge <name>` to view a
 different judge.
 
@@ -15,15 +15,15 @@ between judges; CloudAEye's lead does not).
 
 | Rank | Reviewer | TP | FP | FN | Precision | Recall | F1 |
 |-----:|----------|---:|---:|---:|----------:|-------:|---:|
-| 1 | **CloudAEye** | 14 | 5 | 6 | **73.7%** | **70.0%** | **71.8** |
-| 2 | Qodo | 11 | 21 | 9 | 34.4% | 55.0% | 42.3 |
-| 3 | Cursor Bugbot | 7 | 7 | 13 | 50.0% | 35.0% | 41.2 |
-| 4 | Greptile | 11 | 30 | 9 | 26.8% | 55.0% | 36.1 |
-| 5 | Gemini Code Assist | 10 | 32 | 10 | 23.8% | 50.0% | 32.3 |
-| 6 | GitHub Copilot | 10 | 40 | 10 | 20.0% | 50.0% | 28.6 |
-| 7 | OpenAI Codex | 5 | 13 | 15 | 27.8% | 25.0% | 26.3 |
-| 8 | Claude (GitHub App) | 12 | 70 | 8 | 14.6% | 60.0% | 23.5 |
-| 9 | CodeRabbit | 5 | 19 | 15 | 20.8% | 25.0% | 22.7 |
+| 1 | **CloudAEye** | 14 | 6 | 6 | **70.0%** | **70.0%** | **70.0** |
+| 2 | Cursor Bugbot | 7 | 7 | 13 | 50.0% | 35.0% | 41.2 |
+| 3 | Qodo | 10 | 25 | 10 | 28.6% | 50.0% | 36.4 |
+| 4 | Greptile | 10 | 26 | 10 | 27.8% | 50.0% | 35.7 |
+| 5 | Gemini Code Assist | 10 | 31 | 10 | 24.4% | 50.0% | 32.8 |
+| 6 | GitHub Copilot | 10 | 38 | 10 | 20.8% | 50.0% | 29.4 |
+| 7 | Claude (GitHub App) | 13 | 62 | 7 | 17.3% | 65.0% | 27.4 |
+| 8 | OpenAI Codex | 5 | 12 | 15 | 29.4% | 25.0% | 27.0 |
+| 9 | CodeRabbit | 5 | 13 | 15 | 27.8% | 25.0% | 26.3 |
 
 - **TP** — golden findings the reviewer correctly raised
 - **FP** — issues the reviewer raised that don't correspond to a golden
