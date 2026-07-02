@@ -5,7 +5,7 @@ merged pull requests with human-verified bug findings. It measures how well a
 reviewer catches genuine issues (recall) without drowning them in noise (precision),
 and produces a single F1 leaderboard.
 
-➡️ **[Current leaderboard](LEADERBOARD.md)** · **[Full benchmark report](https://www.cloudaeye.com/products/code-review/benchmark-2026/index-cpp.html)**
+➡️ **[Current leaderboard](LEADERBOARD.md)** · **[Full benchmark report](https://www.cloudaeye.com/products/code-review/benchmark-2026-cpp/index.html)**
 
 Everything needed to reproduce the leaderboard and to score a new reviewer is in
 this folder. The raw reviews each bot posted can be read on the live forks — see
