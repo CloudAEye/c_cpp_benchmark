@@ -3,7 +3,7 @@
 **Dataset:** 16 real merged PRs (7 C / 9 C++), 20 human-verified golden findings
 **Judge (default):** `anthropic_claude-sonnet-4-5-20250929` — also scored by
 `anthropic_claude-opus-4-5-20251101` and `openai_gpt-5.2`
-**Last updated:** 2026-06-25
+**Last updated:** 2026-07-02
 
 Every reviewer is scored by the same scrape-and-judge pipeline on the same forks.
 Reproduce the scores from `results/` with `python pipeline/compute_metrics.py`
@@ -15,7 +15,7 @@ between judges; CloudAEye's lead does not).
 
 | Rank | Reviewer | TP | FP | FN | Precision | Recall | F1 |
 |-----:|----------|---:|---:|---:|----------:|-------:|---:|
-| 1 | **CloudAEye** | 14 | 5 | 6 | **73.7%** | **70.0%** | **71.8** |
+| 1 | **CloudAEye** | 14 | 8 | 6 | **63.6%** | **70.0%** | **66.7** |
 | 2 | Qodo | 11 | 21 | 9 | 34.4% | 55.0% | 42.3 |
 | 3 | Cursor Bugbot | 7 | 7 | 13 | 50.0% | 35.0% | 41.2 |
 | 4 | Greptile | 11 | 30 | 9 | 26.8% | 55.0% | 36.1 |
